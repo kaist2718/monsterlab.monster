@@ -2,26 +2,30 @@
 
 `monsterlab.monster` 홈페이지. 빌드 도구가 필요 없는 정적 사이트(HTML + CSS + JS)입니다.
 
+MonsterLab가 운영하는 서비스:
+
+| 서비스 | 주소 | 저장소 |
+| --- | --- | --- |
+| 토익 학습 | [toeic.monster](https://toeic.monster) | — |
+| 월간 영어 매거진 **EngMon** | [engmon.monster](https://engmon.monster) | `engmon.monster` (별도 저장소) |
+
 ## 구조
 
 ```
 index.html     # 홈페이지 마크업 (소개·서비스·로드맵·FAQ·문의)
-magazine.html  # 매거진 1호 페이지 (섹션 목록·오디오·단어장·확인 문제)
-issues.js      # 매거진 데이터(호·섹션) — 이 파일이 콘텐츠의 "DB"
-magazine.js    # 매거진 페이지 렌더링·오디오·단어장·진행률
+script.js      # 한/영 전환, 테마·강조색, 모바일 메뉴, 스크롤 효과 + i18n 사전
 styles.css     # 스타일 (다크/라이트 테마, 강조색 프리셋, 반응형)
-script.js      # 한/영 전환, 테마·강조색, 모바일 메뉴, 스크롤 효과
 smoke-test.js  # 검증 스크립트 (배포 전 `node smoke-test.js`)
+CNAME          # GitHub Pages 커스텀 도메인 (monsterlab.monster)
 ```
 
 - 프레임워크·패키지·빌드 과정 없음. 파일을 그대로 올리면 동작합니다.
-- 외부 의존성 없음(폰트는 시스템 폰트 사용, CDN 요청 없음). 매거진 오디오도 브라우저 내장 음성합성을 씁니다.
+- 외부 의존성 없음(폰트는 시스템 폰트 사용, CDN 요청 없음).
 - 연락 폼은 별도 서버 없이 `mailto:`로 동작합니다. 백엔드가 필요하면 폼 `submit` 핸들러만 교체하면 됩니다.
-- `script.js`가 두 페이지 공통(테마·언어·메뉴)을 맡고, `magazine.js`는 `window.MonsterLab`(`t`, `toast`)과
-  `langchange` 이벤트로만 연결됩니다. 두 페이지의 헤더/푸터 ID가 같아야 공통 스크립트가 그대로 동작합니다.
 - `script.js`는 **공용 API를 먼저 노출한 뒤, 기능별로 `guard()` 안에서 초기화**합니다.
   한 기능이 예외로 죽어도 나머지(특히 언어 전환)는 계속 동작하고, 실패한 기능만 콘솔에 남습니다.
   (예전에는 모든 기능이 한 줄기라서 테마 초기화 하나가 죽으면 언어 버튼까지 함께 죽었습니다.)
+- 매거진(EngMon)은 이 저장소에서 분리되었습니다. 서비스 카드는 `https://engmon.monster`로 연결만 합니다.
 
 ## 로컬에서 보기
 
@@ -42,8 +46,8 @@ node smoke-test.js
 ```
 
 브라우저 없이 페이지 스크립트를 **실제로 실행**해 보는 테스트입니다(의존성 없음, Node만 있으면 됩니다).
-`index.html`과 `magazine.html`의 인라인 스크립트 → `script.js` → `magazine.js`를 최소 DOM 위에서 돌리고,
-언어 전환·테마 선택·문의 폼·매거진 렌더링·듣기 속도 저장까지 클릭을 흉내 내 확인합니다.
+`index.html`의 인라인 스크립트 → `script.js`를 최소 DOM 위에서 돌리고,
+언어 전환·테마 선택·강조색·문의 폼 검증까지 클릭을 흉내 내 확인합니다.
 
 특히 다음 두 가지를 지켜줍니다.
 
@@ -51,23 +55,22 @@ node smoke-test.js
   (실제로 배포된 사이트가 이 문제로 테마 아이콘과 언어 전환이 함께 죽은 적이 있습니다.)
 - **사전 검사**: `data-i18n` 키가 ko/en 양쪽에 모두 있는지, 쓰이지 않는 키가 없는지 확인합니다.
 
-## 캐시 무효화 (배포 후 \"안 바뀐 것처럼 보이는\" 문제)
+## 캐시 무효화 (배포 후 "안 바뀐 것처럼 보이는" 문제)
 
-CSS·JS를 참조할 때 `?v=3` 같은 버전을 붙여 둡니다.
+CSS·JS를 참조할 때 `?v=4` 같은 버전을 붙여 둡니다.
 
 ```html
 <link rel="stylesheet" href="styles.css?v=3" />
-<script src="script.js?v=3"></script>
+<script src="script.js?v=4"></script>
 ```
 
-**CSS나 JS를 고쳐서 배포할 때는 두 HTML 파일의 `?v=` 숫자를 함께 올리세요.**
+**CSS나 JS를 고쳐서 배포할 때는 `index.html`의 해당 `?v=` 숫자를 올리세요.**
 그러지 않으면 브라우저나 CDN이 예전 파일을 계속 쓰면서 수정이 반영되지 않은 것처럼 보입니다.
-(테스트가 공유 에셋의 버전이 두 페이지에서 같은지 검사합니다.)
 
 ## 배포
 
-정적 호스팅 아무 곳에나 HTML·CSS·JS 파일을 올리면 됩니다(`index.html`, `magazine.html`,
-`styles.css`, `script.js`, `issues.js`, `magazine.js`, `CNAME`).
+정적 호스팅 아무 곳에나 HTML·CSS·JS 파일을 올리면 됩니다
+(`index.html`, `styles.css`, `script.js`, `CNAME`).
 
 - **Vercel**: 프로젝트 루트를 그대로 배포 (프레임워크: Other / Static)
 - **Netlify**: 폴더를 드래그 앤 드롭
@@ -75,6 +78,9 @@ CSS·JS를 참조할 때 `?v=3` 같은 버전을 붙여 둡니다.
 - **Cloudflare Pages**: 빌드 명령 없이 루트 디렉터리 지정
 
 배포 후 `monsterlab.monster` 도메인을 연결하세요.
+
+> GitHub Pages는 **저장소당 커스텀 도메인 하나만** 지원합니다. 그래서 EngMon(`engmon.monster`)은
+> 별도 저장소로 분리되어 있습니다.
 
 ## 내용 수정 방법
 
@@ -173,68 +179,23 @@ CSS·JS를 참조할 때 `?v=3` 같은 버전을 붙여 둡니다.
 
 **홈(index.html)** 히어로(제품 미리보기 포함) → 소개 → 서비스 → 로드맵 → FAQ → 문의 → 푸터.
 
-**매거진(magazine.html)** 표지 → 목차(데스크톱에서는 붙어 있음) + 본문 2단 → 단어장 → 다음 호 → 푸터.
-읽기 진행률은 표지 카드와 화면 상단 바 두 곳에 표시되고, 목차는 현재 보고 있는 섹션을 강조합니다.
-
 - **히어로 미리보기**: `index.html`의 `.hero-preview` 블록. 실제 화면 캡처 이미지로 교체하려면
   `.preview-window` 안을 `<img src="preview.png" alt="..." />`로 바꾸면 됩니다.
 - **FAQ**: `<details class="faq">` 항목을 복사해 추가합니다. 첫 항목만 `open`이 붙어 있습니다.
 - **문의 폼**: 입력값을 검사한 뒤 `mailto:` 링크를 열어 메일 앱으로 전달합니다.
 
-## 매거진 (`magazine.html`)
-
-`issues.js` 하나로 호(issue)를 추가하는 구조입니다. 서버도 CMS도 필요 없습니다.
-
-```js
-var MAGAZINE_ISSUES = [
-  { number: 2, slug: 'issue-02', date: '2026-11', level: 'B1', minutes: 25,
-    theme: { ko, en }, title: { ko, en }, summary: { ko, en },
-    sections: [ { id, kind, level, title:{ko,en}, intro, body, items, dialogue, questions, quiz } ] }
-];
-```
-
-- 배열의 **맨 앞 호**가 페이지에 표시됩니다(`issues[0]`). 새 호는 맨 앞에 끼워 넣으면 됩니다.
-- 섹션 필드는 모두 선택사항이고, 있는 필드만 그려집니다.
-  - `items` — 어휘·표현. 각 항목에 "단어장에 저장" 버튼이 자동으로 붙습니다.
-  - `quote` — 섹션 중간에 들어가는 강조 인용 `{ ko, en }`
-  - `bullets` — 저장 버튼 없는 목록(해설 노트용)
-  - `dialogue` — `{ who, en, ko }` 대화문 (좌우로 번갈아 배치되는 말풍선)
-  - `questions` — 토론 질문 / `quiz` — 보기 중 정답 인덱스(`answer`)와 해설
-- `kind` 값은 `mag.kind.<kind>` 문구와 짝을 이룹니다. 새 종류를 쓰려면 `script.js`의 `I18N`에
-  `mag.kind.<이름>`을 ko/en 양쪽에 추가하세요.
-- **오디오**: `issues.js`의 영어 필드(`body.en`, `items[].en`, `dialogue[].en`)를 모아
-  `speechSynthesis`로 읽습니다. 오디오 파일이 필요 없고 비용도 0입니다.
-  미리 만든 음성 파일이 필요해지면 `magazine.js`의 `speak()`만 교체하면 됩니다.
-
-저장 키: `monsterlab.wordbook`(저장한 단어) · `monsterlab.progress`(섹션 완료) ·
-`monsterlab.rate`(듣기 속도) — 모두 이 브라우저에만 남습니다.
-
-표지의 **듣기 속도** 버튼은 `speechSynthesis`의 `rate`에 그대로 적용됩니다(느리게 0.75× / 보통 1× /
-빠르게 1.25×). 학습자가 같은 지문을 여러 속도로 들을 수 있게 하려는 장치입니다.
-
-> ⚠️ `issues.js`의 1호 내용은 **템플릿 예시(초안)**입니다. 실제 발행 전에 자체 집필로 교체하세요.
-> "Learn Hot English"는 실존하는 상업 브랜드(월간, 290호 이상)이므로 **이름·섹션 구성·문장을 그대로 가져오면 안 됩니다.**
-> 포맷(월간 테마 + 고정 섹션)만 참고하고 내용은 직접 써야 합니다.
-
 ## 기능
 
-- 매거진: 표지 카드(호 번호·테마·날짜), 붙어 있는 목차(스크롤 위치 추적), 상단 읽기 진행 바,
-  섹션별 듣기·읽기 시간·완료 표시, 단어장 저장/복사/비우기, 즉시 채점되는 확인 문제, 다음 섹션 이동
 - 문의: 유형 탭(일반·버그·제휴)에 따라 제목 자동 생성, 필드별 오류 메시지, 글자 수 카운터,
   보낼 내용 미리보기, 전송 3가지(메일 앱 / Gmail / 본문 복사)
-- 한/영 전환 토글 — 매거진 페이지의 동적 콘텐츠도 `langchange` 이벤트로 함께 다시 그려집니다
-- 선택 언어는 `localStorage`에 저장
+- 한/영 전환 토글 — 선택 언어는 `localStorage`에 저장
 - 모바일 햄버거 메뉴 (ESC로 닫기)
 - 스크롤 시 헤더 경계선 표시, 현재 보고 있는 섹션 메뉴 강조
 - 스크롤 진입 시 카드/서비스/FAQ 페이드인 (`prefers-reduced-motion`이면 비활성)
 - 이메일 주소 복사 버튼(클립보드 API, 실패 시 폴백)과 토스트 안내
-- 문의 폼 검증 + 메일 앱 연결
 - 맨 위로 가기 버튼 (600px 이상 스크롤 시 표시)
 - 다크/라이트/시스템 3단계 테마 **선택** 버튼 (`localStorage` 저장, 기본은 시스템 설정)
 - 강조색 4종 프리셋 선택 (푸터 스와치, `localStorage` 저장)
-- 푸터에 현재 테마 모드 표시
 - 언어 전환 시 **탭 제목과 설명도 함께** 바뀜 (`<html data-title-key="..." data-desc-key="...">`)
 - **Alt + L** 단축키로 언어 전환
-- 매거진 **듣기 속도** 3단계(0.75× / 1× / 1.25×, `localStorage` 저장)
-- 영어 학습 콘텐츠에 `lang="en"`(한국어 해설에는 `lang="ko"`) 표시 → 화면 낭독기·브라우저 음성이 올바른 언어로 읽음
 - `prefers-reduced-motion` 존중, 키보드 포커스 링 지원

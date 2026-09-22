@@ -44,12 +44,11 @@
   "name": "MonsterLab",
   "url": "https://monsterlab.monster/",
   "email": "kaist2718@gmail.com",
-  "description": "작은 아이디어를 괴물 같은 서비스로. toeic.monster를 운영하는 실험실.",
-  "owns": {
-    "@type": "WebSite",
-    "name": "toeic.monster",
-    "url": "https://toeic.monster"
-  }
+  "description": "작은 아이디어를 괴물 같은 서비스로. toeic.monster와 engmon.monster를 운영하는 실험실.",
+  "owns": [
+    { "@type": "WebSite", "name": "toeic.monster", "url": "https://toeic.monster" },
+    { "@type": "WebSite", "name": "engmon.monster", "url": "https://engmon.monster" }
+  ]
 }
 </script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230a0e13'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%236ee7a8' font-family='sans-serif' font-weight='bold'%3EM%3C/text%3E%3C/svg%3E" />
@@ -149,7 +148,7 @@
 
       <ul class="stats">
         <li>
-          <span class="stat-num">1</span>
+          <span class="stat-num">2</span>
           <span class="stat-label" data-i18n="stats.live">운영 중인 서비스</span>
         </li>
         <li>
@@ -220,20 +219,22 @@
           </a>
         </article>
 
-        <!-- 🚧 준비 중 (서비스가 늘어나면 이 블록을 복사해서 추가하세요) -->
-        <article class="service service-soon">
+        <!-- ✅ 운영 중 -->
+        <article class="service service-live">
           <div class="service-head">
-            <span class="status status-soon" data-i18n="status.soon">준비 중</span>
+            <span class="service-dot" aria-hidden="true"></span>
+            <span class="status status-live" data-i18n="status.live">운영 중</span>
           </div>
-          <h3 class="service-name" data-i18n="service.mag.name">월간 영어 매거진</h3>
+          <h3 class="service-name">engmon<span class="accent">.monster</span></h3>
           <p class="service-desc" data-i18n="service.mag.desc">
-            호(issue) 단위로 읽는 영어 매거진. 테마 어휘·문법·이디엄·대화·확인 문제를 오디오와 함께 한 호에 담습니다.
+            호(issue) 단위로 읽는 월간 영어 매거진. 테마 어휘·문법·이디엄·대화·확인 문제를 오디오와 함께 한 호에 담습니다.
           </p>
-          <a class="service-link" href="magazine.html">
-            <span data-i18n="service.mag.cta">1호 템플릿 보기</span> <span aria-hidden="true">↗</span>
+          <a class="service-link" href="https://engmon.monster" target="_blank" rel="noopener">
+            <span data-i18n="service.visit">사이트 방문</span> <span aria-hidden="true">↗</span>
           </a>
         </article>
 
+        <!-- 🚧 준비 중 (서비스가 늘어나면 이 블록을 복사해서 추가하세요) -->
         <article class="service service-soon">
           <div class="service-head">
             <span class="status status-soon" data-i18n="status.soon">준비 중</span>
@@ -426,6 +427,7 @@
       <a href="#services" data-i18n="nav.services">서비스</a>
       <a href="#faq" data-i18n="nav.faq">FAQ</a>
       <a href="https://toeic.monster" target="_blank" rel="noopener">toeic.monster</a>
+      <a href="https://engmon.monster" target="_blank" rel="noopener">engmon.monster</a>
       <a href="mailto:kaist2718@gmail.com">kaist2718@gmail.com</a>
     </nav>
     <div class="footer-settings">
@@ -454,6 +456,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="script.js?v=3"></script>
+<script src="script.js?v=4"></script>
 </body>
 </html>

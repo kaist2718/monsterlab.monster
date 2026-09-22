@@ -11,11 +11,10 @@
      화면에는 "테마 아이콘이 안 보이고 언어 전환도 안 되는" 증상이 나타났습니다.
 
    이 테스트가 확인하는 것:
-     1. head의 인라인 스크립트 → script.js → magazine.js 순서로 오류 없이 실행되는가
+     1. head의 인라인 스크립트 → script.js 순서로 오류 없이 실행되는가
      2. 언어 전환이 실제로 문구·탭 제목을 바꾸는가 (ko/en 사전에 빈틈은 없는가)
      3. 테마 버튼/강조색 스와치가 선택 상태를 정확히 반영하는가
      4. 문의 폼 검증과 메일 생성이 동작하는가
-     5. 매거진이 데이터만큼 섹션을 그리고 언어 전환에 반응하는가
      6. 한 기능이 실패해도 나머지(특히 언어 전환)는 살아남는가  ← 핵심 회귀 테스트
      7. HTML에 중복 id가 없고, 에셋 URL에 캐시 무효화 버전이 붙어 있는가
    ========================================================================== */
@@ -71,7 +70,7 @@ function makeElement(tag) {
   };
 
   /* 실제 DOM과 같게: textContent/innerHTML에 값을 넣으면 자식 노드가 사라집니다.
-     magazine.js는 컨테이너를 비울 때 node.textContent = '' 를 쓰기 때문에,
+     렌더링 스크립트는 컨테이너를 비울 때 node.textContent = '' 를 쓰기 때문에,
      이 동작이 없으면 재렌더링 때 섹션이 중복으로 쌓인 것처럼 보입니다. */
   let text = '';
   let markup = '';
@@ -291,7 +290,7 @@ function makeSandbox(dom, opts) {
   return sandbox;
 }
 
-/* 브라우저와 같은 순서로 실행: head 인라인 → issues.js → script.js → magazine.js */
+/* 브라우저와 같은 순서로 실행: head 인라인 → script.js */
 function runPage(file, options) {
   const opts = options || {};
   const html = fs.readFileSync(path.join(ROOT, file), 'utf8');
@@ -304,7 +303,7 @@ function runPage(file, options) {
     vm.runInContext(inline[1], context, { filename: file + ' (인라인)' });
   }
 
-  ['issues.js', 'script.js', 'magazine.js'].forEach((name) => {
+  ['script.js'].forEach((name) => {
     if (!fs.existsSync(path.join(ROOT, name))) return;
     vm.runInContext(fs.readFileSync(path.join(ROOT, name), 'utf8'), context, { filename: name });
   });
@@ -312,7 +311,7 @@ function runPage(file, options) {
   return { sandbox, dom, html };
 }
 
-const PAGES = ['index.html', 'magazine.html'];
+const PAGES = ['index.html'];
 const loaded = {};
 
 /* ── 1. 두 페이지가 오류 없이 초기화되는가 ─────────────────────────────── */
@@ -330,10 +329,10 @@ if (index) {
 
   check('window.MonsterLab API가 노출된다', () => {
     assert(sandbox.MonsterLab && typeof sandbox.MonsterLab.t === 'function',
-      'window.MonsterLab.t 가 없습니다 (magazine.js가 키 이름을 그대로 출력합니다)');
-    const label = sandbox.MonsterLab.t('mag.listen', 'ko');
-    assert(label !== 'mag.listen', 't()가 키를 그대로 반환했습니다');
-    return 't("mag.listen") = "' + label + '"';
+      'window.MonsterLab.t 가 없습니다 (없으면 화면에 키 이름이 그대로 나옵니다)');
+    const label = sandbox.MonsterLab.t('stats.live', 'ko');
+    assert(label !== 'stats.live', 't()가 키를 그대로 반환했습니다');
+    return 't("stats.live") = "' + label + '"';
   });
 
   check('인라인 스크립트가 첫 페인트 전에 테마/강조색을 심는다', () => {
@@ -526,11 +525,7 @@ check('필수 요소(#langBtn·#langLabel·#toast)가 HTML에 있다', () => {
   ['langBtn', 'langLabel', 'toast', 'contactForm', 'siteHeader', 'nav', 'menuBtn'].forEach((id) => {
     assert(html.indexOf('id="' + id + '"') !== -1, '# ' + id + ' 가 index.html에 없습니다');
   });
-  const mag = fs.readFileSync(path.join(ROOT, 'magazine.html'), 'utf8');
-  ['langBtn', 'langLabel', 'toast', 'issueContent', 'tocList', 'wbList'].forEach((id) => {
-    assert(mag.indexOf('id="' + id + '"') !== -1, '# ' + id + ' 가 magazine.html에 없습니다');
-  });
-  return '두 페이지 공통 요소 확인';
+  return 'index.html 필수 요소 확인';
 });
 
 /* ── 4. i18n 사전 완전성 ───────────────────────────────────────────────── */
@@ -552,20 +547,7 @@ if (index) {
         });
     });
     assert(missing.length === 0, '누락: ' + missing.slice(0, 5).join(' / '));
-    return '두 페이지 모든 속성 × ko·en 통과';
-  });
-
-  check('magazine.js가 참조하는 키가 ko·en 양쪽에 있다', () => {
-    const src = fs.readFileSync(path.join(ROOT, 'magazine.js'), 'utf8');
-    const keys = new Set([...src.matchAll(/\bt\('([^']+)'\)/g)].map((m) => m[1]));
-    const missing = [];
-    keys.forEach((key) => {
-      ['ko', 'en'].forEach((lang) => {
-        if (index.sandbox.MonsterLab.t(key, lang) === key) missing.push(key + ' (' + lang + ')');
-      });
-    });
-    assert(missing.length === 0, '누락: ' + missing.join(', '));
-    return keys.size + '개 키 확인';
+    return 'index.html 모든 속성 × ko·en 통과';
   });
 
   check('사전에 한쪽 언어에만 있는 키가 없다', () => {
@@ -596,9 +578,9 @@ check('사용하지 않는 i18n 키가 없다', () => {
   const keys = [...body.slice(0, cut).matchAll(/'([^']+)':/g)].map((m) => m[1]);
 
   /* 어디든 문자열로 등장하면 사용 중으로 봅니다. 'accent.' 처럼 조합해서
-     만드는 키(accent.* / theme.* / contact.subject.* / mag.kind.*)는 접두사로 인정합니다. */
+     만드는 키(accent.* / theme.* / contact.subject.*)는 접두사로 인정합니다. */
   const literals = new Set();
-  PAGES.concat(['script.js', 'magazine.js']).forEach((file) => {
+  PAGES.concat(['script.js']).forEach((file) => {
     const code = fs.readFileSync(path.join(ROOT, file), 'utf8');
     [...code.matchAll(/'([A-Za-z][\w.-]*)'/g)].forEach((m) => literals.add(m[1]));
   });
@@ -610,106 +592,6 @@ check('사용하지 않는 i18n 키가 없다', () => {
   assert(unused.length === 0, '사용되지 않음: ' + unused.join(', '));
   return keys.length + '개 키 모두 사용 중 (조합 접두사 ' + prefixes.length + '개)';
 });
-
-/* ── 5. magazine.html ──────────────────────────────────────────────────── */
-const magazine = loaded['magazine.html'];
-
-if (magazine) {
-  const { sandbox, dom } = magazine;
-
-  check('magazine.html — 매거진이 데이터만큼 렌더링된다', () => {
-    const content = dom.byId.get('issueContent');
-    assert(content && content.children.length, '본문이 렌더링되지 않았습니다');
-
-    const data = sandbox.MAGAZINE_ISSUES || [];
-    assert(data.length, 'issues.js를 읽지 못했습니다');
-
-    const expected = data[0].sections.length;
-    assert(content.children.length === expected,
-      '섹션 ' + content.children.length + '개 (데이터: ' + expected + '개)');
-    return expected + '개 섹션';
-  });
-
-  check('표지·목차·진행률이 채워진다', () => {
-    const numeral = dom.byId.get('issueNumeral');
-    const toc = dom.byId.get('tocList');
-    const progress = dom.byId.get('issueProgressText');
-
-    assert(numeral && numeral.textContent === '01', '호 번호 = ' + (numeral && numeral.textContent));
-    assert(toc && toc.children.length, '목차가 비어 있습니다');
-    assert(progress && progress.textContent === '0 / 10', '진행률 = ' + (progress && progress.textContent));
-    return '호 01 · 목차 ' + toc.children.length + '개 · 진행률 "' + progress.textContent + '"';
-  });
-
-  check('화면에 번역되지 않은 키 이름이 남지 않는다', () => {
-    const content = dom.byId.get('issueContent');
-    const texts = [];
-    (function walk(node) {
-      if (node.textContent) texts.push(node.textContent);
-      (node.children || []).forEach(walk);
-    })(content);
-
-    const raw = texts.filter((t) => /^(mag\.|form\.|contact\.|theme\.|accent\.)/.test(t));
-    assert(raw.length === 0, '키가 그대로 노출: ' + raw.slice(0, 3).join(', '));
-    return '미번역 키 0개';
-  });
-
-  check('언어를 바꾸면 매거진 본문도 다시 그려진다', () => {
-    const content = dom.byId.get('issueContent');
-    const before = content.children.length;
-
-    dom.byId.get('langBtn').dispatch('click');
-
-    assert(dom.documentElement.getAttribute('lang') === 'en', '언어가 바뀌지 않았습니다');
-    assert(content.children.length === before, '섹션 수가 달라졌습니다');
-
-    const toc = dom.byId.get('tocList');
-    const texts = [];
-    (function walk(node) {
-      if (node.textContent) texts.push(node.textContent);
-      (node.children || []).forEach(walk);
-    })(content);
-
-    const raw = texts.filter((t) => /^(mag\.|form\.|contact\.)/.test(t));
-    assert(raw.length === 0, '영어 전환 후 키가 노출: ' + raw.slice(0, 3).join(', '));
-    assert(toc && toc.children.length, '목차가 사라졌습니다');
-    return '섹션 ' + before + '개 유지, 미번역 키 0개';
-  });
-
-  check('단어장 저장·복사·비우기 요소가 준비돼 있다', () => {
-    ['wbList', 'wbEmpty', 'wbCopyBtn', 'wbClearBtn'].forEach((id) => {
-      assert(dom.byId.get(id), '#' + id + '가 없습니다');
-    });
-    return '4개 요소 확인';
-  });
-
-  check('듣기 속도를 바꾸면 저장되고 선택 표시가 갱신된다', () => {
-    const btns = dom.bySelector['[data-rate]'];
-    assert(btns.length === 3, '속도 버튼 ' + btns.length + '개 (3개여야 함)');
-
-    const slow = btns.filter((b) => b.getAttribute('data-rate') === '0.75')[0];
-    const fast = btns.filter((b) => b.getAttribute('data-rate') === '1.15')[0];
-
-    assert(fast.getAttribute('aria-pressed') === 'false', '기본값이 1.25×로 표시되어 있습니다');
-    assert(btns.filter((b) => b.getAttribute('aria-pressed') === 'true').length === 1,
-      '선택 표시가 하나가 아닙니다');
-
-    slow.dispatch('click');
-    assert(JSON.parse(sandbox.localStorage.getItem('monsterlab.rate')) === 0.75,
-      '저장값 = ' + sandbox.localStorage.getItem('monsterlab.rate'));
-    assert(slow.getAttribute('aria-pressed') === 'true', '선택 표시가 갱신되지 않았습니다');
-    assert(fast.getAttribute('aria-pressed') === 'false', '이전 선택이 남아 있습니다');
-
-    /* 다시 열면 저장된 속도가 선택되어 있어야 합니다 */
-    const reopened = runPage('magazine.html', { storage: { 'monsterlab.rate': '0.75' } });
-    const restored = reopened.dom.bySelector['[data-rate]']
-      .filter((b) => b.getAttribute('aria-pressed') === 'true');
-    assert(restored.length === 1 && restored[0].getAttribute('data-rate') === '0.75',
-      '저장된 속도가 복원되지 않았습니다');
-
-    return '1× → 0.75× 저장 및 복원 확인';
-  });
-}
 
 /* ── 6. HTML 위생 점검 ─────────────────────────────────────────────────── */
 PAGES.forEach((file) => {
@@ -729,7 +611,7 @@ PAGES.forEach((file) => {
   });
 });
 
-check('공유 에셋(styles.css / script.js) 버전이 두 페이지에서 같다', () => {
+check('공유 에셋(styles.css / script.js) 버전 표기가 일관된다', () => {
   const versions = {};
   PAGES.forEach((file) => {
     const html = fs.readFileSync(path.join(ROOT, file), 'utf8');
@@ -766,70 +648,8 @@ check('CSS에 없는 클래스를 화면에 쓰지 않는다', () => {
     used.forEach((c) => { if (!defined(c)) problems.push(file + ' .' + c); });
   });
 
-  /* 2) 스크립트가 만들어내는 클래스 (매거진 렌더링 결과를 직접 훑어봅니다) */
-  if (magazine) {
-    const seen = new Set();
-    ['issueContent', 'tocList', 'wbList', 'issueMeta'].forEach((id) => {
-      (function walk(node) {
-        if (!node) return;
-        if (node.className) String(node.className).split(/\s+/).forEach((c) => c && seen.add(c));
-        (node.children || []).forEach(walk);
-      })(magazine.dom.byId.get(id));
-    });
-    seen.forEach((c) => { if (!defined(c)) problems.push('매거진 렌더링 .' + c); });
-  }
-
   assert(problems.length === 0, '스타일 없음: ' + [...new Set(problems)].join(', '));
-  return 'HTML + 매거진 렌더링 클래스 모두 정의됨';
-});
-
-check('매거진 데이터 구조가 올바르다', () => {
-  const sandbox = vm.createContext(makeSandbox(makeDom('<html></html>'), {}));
-  vm.runInContext(fs.readFileSync(path.join(ROOT, 'issues.js'), 'utf8'), sandbox);
-
-  const issues = sandbox.MAGAZINE_ISSUES;
-  assert(Array.isArray(issues) && issues.length, 'MAGAZINE_ISSUES가 배열이 아닙니다');
-
-  const seen = new Set();
-  let items = 0;
-  let quizzes = 0;
-
-  issues.forEach((issue) => {
-    ['number', 'slug', 'theme', 'title', 'summary'].forEach((field) => {
-      assert(issue[field] != null, '호에 ' + field + '가 없습니다');
-    });
-    issue.theme.ko && issue.theme.en || assert(false, 'theme에 ko/en이 필요합니다');
-
-    issue.sections.forEach((section) => {
-      assert(!seen.has(section.id), '중복 섹션 id: ' + section.id);
-      seen.add(section.id);
-      assert(section.title && section.title.ko && section.title.en,
-        section.id + '의 제목이 ko/en 양쪽에 필요합니다');
-
-      (section.items || []).forEach((item) => {
-        items++;
-        assert(item.en != null, section.id + ' 항목에 en이 없습니다');
-        assert(item.ko != null, section.id + ' 항목에 ko가 없습니다');
-      });
-
-      (section.dialogue || []).forEach((line) => {
-        assert(line.en && line.ko, section.id + ' 대화문에 ko/en이 필요합니다');
-      });
-
-      (section.quiz || []).forEach((item) => {
-        quizzes++;
-        assert(item.q && item.q.ko && item.q.en, section.id + ' 퀴즈 문제에 ko/en이 필요합니다');
-        assert(Array.isArray(item.options) && item.options.length >= 2,
-          section.id + ' 퀴즈 보기가 부족합니다');
-        assert(item.answer >= 0 && item.answer < item.options.length,
-          section.id + ' 퀴즈 정답 범위 오류');
-        assert(item.explain && item.explain.ko && item.explain.en,
-          section.id + ' 퀴즈 해설에 ko/en이 필요합니다');
-      });
-    });
-  });
-
-  return issues.length + '호 / 섹션 ' + seen.size + '개 / 항목 ' + items + '개 / 퀴즈 ' + quizzes + '개';
+  return 'HTML 클래스 모두 정의됨';
 });
 
 /* ── 결과 ─────────────────────────────────────────────────────────────── */
