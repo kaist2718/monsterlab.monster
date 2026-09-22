@@ -77,8 +77,17 @@
       'faq.q5': '새 서비스는 언제 공개되나요?',
       'faq.a5': '출시가 확정되면 이 페이지의 서비스 섹션과 로드맵에서 가장 먼저 알립니다.',
 
+      'contact.kicker': 'CONTACT',
       'contact.title': '함께 만들 아이디어가 있나요?',
-      'contact.lead': '제휴, 피드백, 버그 제보 모두 환영합니다. 편하게 메일을 보내주세요.',
+      'contact.lead': '제휴, 피드백, 버그 제보 모두 환영합니다. 아래에서 편한 방식을 골라주세요.',
+      'contact.intentLabel': '문의 유형',
+      'contact.intentGeneral': '일반 문의',
+      'contact.intentBug': '버그 제보',
+      'contact.intentPartner': '제휴 제안',
+      'contact.subject.general': 'MonsterLab 문의',
+      'contact.subject.bug': 'MonsterLab 버그 제보',
+      'contact.subject.partner': 'MonsterLab 제휴 제안',
+      'contact.replyTime': '보통 영업일 기준 2~3일 안에 답장드립니다.',
       'contact.mailLabel': '이메일',
       'contact.copy': '주소 복사',
       'contact.copied': '이메일 주소를 복사했습니다',
@@ -88,22 +97,26 @@
       'form.namePh': '홍길동',
       'form.email': '답장 받을 이메일',
       'form.message': '내용',
-      'form.messagePh': '어떤 이야기든 좋습니다.',
-      'form.submit': '메일 앱으로 보내기',
-      'form.hint': '작성한 내용이 메일 앱에서 열립니다.',
+      'form.messagePh': '어떤 이야기든 좋습니다. 버그라면 재현 방법을 적어 주세요.',
+      'form.sendMailApp': '메일 앱으로 보내기',
+      'form.sendGmail': 'Gmail로 보내기',
+      'form.copyBody': '본문 복사',
+      'form.bodyCopied': '메일 본문을 복사했습니다',
+      'form.preview': '보낼 내용 미리보기',
+      'form.hint': '메일 앱이 없다면 Gmail로 보내기나 본문 복사를 쓰면 됩니다.',
       'form.needName': '이름을 입력해 주세요.',
       'form.needEmail': '이메일 주소를 확인해 주세요.',
       'form.needMessage': '내용을 입력해 주세요.',
-      'form.subject': 'MonsterLab 문의',
       'form.opened': '메일 앱을 여는 중입니다',
 
       'top.back': '맨 위로',
       'theme.dark': '다크',
       'theme.light': '라이트',
       'theme.system': '시스템',
-      'theme.ariaDark': '테마: 다크 모드 · 클릭하면 라이트 모드로 전환',
-      'theme.ariaLight': '테마: 라이트 모드 · 클릭하면 시스템 설정으로 전환',
-      'theme.ariaSystem': '테마: 시스템 설정 · 클릭하면 다크 모드로 전환',
+      'theme.group': '테마 선택',
+      'theme.setDark': '다크 모드로 보기',
+      'theme.setLight': '라이트 모드로 보기',
+      'theme.setSystem': '시스템 설정 따르기',
 
       'footer.themeLabel': '테마',
       'footer.accentLabel': '강조색',
@@ -131,6 +144,11 @@
       'mag.wbClear': '비우기',
       'mag.wbCopied': '단어장을 복사했습니다',
       'mag.wbClearConfirm': '저장한 단어를 모두 지울까요?',
+      'mag.progressLabel': '읽기 진행',
+      'mag.minSuffix': '분',
+      'mag.resume': '이어서 읽기',
+      'mag.nextSection': '다음 섹션',
+      'mag.nextNote': '보통 영업일 기준 2~3일 안에 답장드립니다.',
       'mag.nextTitle': '다음 호가 나오면 알려드릴까요?',
       'mag.nextLead': '새 호 소식과 피드백은 모두 같은 메일로 받습니다. 원하는 주제가 있으면 함께 적어 보내주세요.',
       'mag.subscribe': '메일 보내기',
@@ -138,8 +156,6 @@
       'mag.level': '레벨',
       'mag.sections': '섹션',
       'mag.minutes': '분',
-      'mag.progress': '진행',
-      'mag.wordsSaved': '저장한 단어',
       'mag.listen': '듣기',
       'mag.stop': '정지',
       'mag.noAudio': '이 브라우저에서는 오디오를 재생할 수 없습니다',
@@ -237,8 +253,17 @@
       'faq.q5': 'When will the next service launch?',
       'faq.a5': 'Once a launch date is confirmed, the services section and roadmap on this page are the first places we announce it.',
 
+      'contact.kicker': 'CONTACT',
       'contact.title': 'Have an idea to build together?',
-      'contact.lead': 'Partnerships, feedback, and bug reports are all welcome. Just drop us a line.',
+      'contact.lead': 'Partnerships, feedback, and bug reports are all welcome. Pick whichever way suits you.',
+      'contact.intentLabel': 'Type of enquiry',
+      'contact.intentGeneral': 'General',
+      'contact.intentBug': 'Bug report',
+      'contact.intentPartner': 'Partnership',
+      'contact.subject.general': 'MonsterLab enquiry',
+      'contact.subject.bug': 'MonsterLab bug report',
+      'contact.subject.partner': 'MonsterLab partnership proposal',
+      'contact.replyTime': 'We usually reply within two to three business days.',
       'contact.mailLabel': 'Email',
       'contact.copy': 'Copy address',
       'contact.copied': 'Email address copied',
@@ -248,22 +273,26 @@
       'form.namePh': 'Jane Doe',
       'form.email': 'Email to reply to',
       'form.message': 'Message',
-      'form.messagePh': 'Anything at all.',
-      'form.submit': 'Open in mail app',
-      'form.hint': 'Your message opens in your mail app.',
+      'form.messagePh': 'Anything at all. For a bug, tell us how to reproduce it.',
+      'form.sendMailApp': 'Open in mail app',
+      'form.sendGmail': 'Open in Gmail',
+      'form.copyBody': 'Copy the message',
+      'form.bodyCopied': 'Message copied',
+      'form.preview': 'What will be sent',
+      'form.hint': 'No mail app? Use Gmail or copy the message instead.',
       'form.needName': 'Please enter your name.',
       'form.needEmail': 'Please check your email address.',
       'form.needMessage': 'Please enter a message.',
-      'form.subject': 'MonsterLab inquiry',
       'form.opened': 'Opening your mail app',
 
       'top.back': 'Back to top',
       'theme.dark': 'Dark',
       'theme.light': 'Light',
       'theme.system': 'System',
-      'theme.ariaDark': 'Theme: dark · click for light',
-      'theme.ariaLight': 'Theme: light · click for system',
-      'theme.ariaSystem': 'Theme: system · click for dark',
+      'theme.group': 'Choose a theme',
+      'theme.setDark': 'Use dark mode',
+      'theme.setLight': 'Use light mode',
+      'theme.setSystem': 'Follow the system setting',
 
       'footer.themeLabel': 'Theme',
       'footer.accentLabel': 'Accent',
@@ -291,6 +320,11 @@
       'mag.wbClear': 'Clear',
       'mag.wbCopied': 'Wordbook copied',
       'mag.wbClearConfirm': 'Remove every saved word?',
+      'mag.progressLabel': 'Reading progress',
+      'mag.minSuffix': ' min',
+      'mag.resume': 'Continue',
+      'mag.nextSection': 'Next section',
+      'mag.nextNote': 'We usually reply within two to three business days.',
       'mag.nextTitle': 'Want to hear about the next issue?',
       'mag.nextLead': 'New issues and feedback both land in the same inbox. Tell us which topics you want.',
       'mag.subscribe': 'Send an email',
@@ -298,8 +332,6 @@
       'mag.level': 'Level',
       'mag.sections': 'sections',
       'mag.minutes': 'min',
-      'mag.progress': 'Progress',
-      'mag.wordsSaved': 'Saved words',
       'mag.listen': 'Listen',
       'mag.stop': 'Stop',
       'mag.noAudio': 'This browser cannot play the audio',
@@ -327,6 +359,10 @@
 
   var STORAGE_KEY = 'monsterlab.lang';
   var DEFAULT_LANG = 'ko';
+
+  /* applyLang이 초기 호출될 때도 필요하므로 여기서 미리 선언합니다. */
+  var THEME_LABEL_KEYS = { light: 'theme.light', dark: 'theme.dark', system: 'theme.system' };
+  var THEME_ACTION_KEYS = { light: 'theme.setLight', dark: 'theme.setDark', system: 'theme.setSystem' };
 
   var langBtn = document.getElementById('langBtn');
   var langLabel = document.getElementById('langLabel');
@@ -363,7 +399,7 @@
     langBtn.setAttribute('aria-label', lang === 'ko' ? 'Switch to English' : '한국어로 전환');
 
     /* 테마 버튼·강조색 스와치의 라벨도 바뀜 언어로 다시 그림 (저장하지 않음) */
-    if (themeBtn) applyTheme(currentMode());
+    applyTheme(currentMode());
     if (swatchBtns) applyAccent(currentAccent());
 
     try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) { /* private mode */ }
@@ -384,13 +420,12 @@
 
   /* ── Theme (dark / light / system) ───────────────────────────────────────────── */
   var THEME_KEY = 'monsterlab.theme';
-  var THEME_MODES = ['dark', 'light', 'system'];
+  var THEME_MODES = ['light', 'dark', 'system'];
   var THEME_ICONS = { dark: '🌙', light: '☀️', system: '🖥️' };
   var THEME_COLORS = { dark: '#0a0e13', light: '#fbfcfd' };
 
-  var themeBtn = document.getElementById('themeBtn');
-  var themeIcon = document.getElementById('themeIcon');
-  var themeLabel = document.getElementById('themeLabel');
+  var themeSets = document.querySelectorAll('[data-theme-set]');
+  var themeOptionBtns = [];
   var footerTheme = document.getElementById('footerTheme');
   var themeColorMeta = document.querySelector('meta[name="theme-color"]');
 
@@ -408,27 +443,23 @@
   function applyTheme(mode, persist) {
     var theme = mode === 'system' ? systemTheme() : mode;
     var dict = currentDict();
-    var labels = {
-      dark: dict['theme.dark'],
-      light: dict['theme.light'],
-      system: dict['theme.system']
-    };
-    var hints = {
-      dark: dict['theme.ariaDark'],
-      light: dict['theme.ariaLight'],
-      system: dict['theme.ariaSystem']
-    };
 
     htmlEl.setAttribute('data-theme-mode', mode);
     htmlEl.setAttribute('data-theme', theme);
 
-    if (themeIcon) themeIcon.textContent = THEME_ICONS[mode];
-    if (themeLabel) themeLabel.textContent = labels[mode];
-    if (footerTheme) footerTheme.textContent = labels[mode];
-    if (themeBtn) {
-      themeBtn.setAttribute('aria-label', hints[mode]);
-      themeBtn.setAttribute('title', hints[mode]);
+    /* 헤더·모바일 메뉴의 버튼 모두 같은 선택 상태를 보여줍니다 */
+    if (themeOptionBtns) {
+      Array.prototype.forEach.call(themeOptionBtns, function (btn) {
+        var option = btn.getAttribute('data-theme-option');
+        var action = dict[THEME_ACTION_KEYS[option]];
+
+        btn.setAttribute('aria-pressed', option === mode ? 'true' : 'false');
+        btn.setAttribute('aria-label', action);
+        btn.setAttribute('title', action);
+      });
     }
+
+    if (footerTheme && THEME_LABEL_KEYS[mode]) footerTheme.textContent = dict[THEME_LABEL_KEYS[mode]];
     if (themeColorMeta) themeColorMeta.setAttribute('content', THEME_COLORS[theme]);
 
     if (persist) {
@@ -436,12 +467,32 @@
     }
   }
 
-  if (themeBtn) {
-    themeBtn.addEventListener('click', function () {
-      var next = THEME_MODES[(THEME_MODES.indexOf(currentMode()) + 1) % THEME_MODES.length];
-      applyTheme(next, true);
+  /* 헤더·모바일 메뉴의 빈 자리([data-theme-set])에 버튼 3개를 채웁니다.
+     순환 버튼이 아니라 선택 버튼입니다 — 시스템 모드에서 색이 그대로인
+     순간에도 어느 모드를 고른 것인지 눈에 보입니다. */
+  function buildThemeSets() {
+    Array.prototype.forEach.call(themeSets, function (set) {
+      THEME_MODES.forEach(function (mode) {
+        var btn = document.createElement('button');
+        btn.className = 'theme-opt';
+        btn.type = 'button';
+        btn.setAttribute('data-theme-option', mode);
+        btn.setAttribute('aria-pressed', 'false');
+
+        var icon = document.createElement('span');
+        icon.setAttribute('aria-hidden', 'true');
+        icon.textContent = THEME_ICONS[mode];
+        btn.appendChild(icon);
+
+        btn.addEventListener('click', function () { applyTheme(mode, true); });
+
+        set.appendChild(btn);
+        themeOptionBtns.push(btn);
+      });
     });
   }
+
+  buildThemeSets();
 
   /* 인라인 스크립트가 정한 값을 UI에 반영 (저장은 하지 않음) */
   applyTheme(currentMode());
@@ -533,78 +584,193 @@
     return I18N[htmlEl.getAttribute('lang')] || I18N[DEFAULT_LANG];
   }
 
-  /* ── Email: copy to clipboard ───────────────────────────────────────── */
+  /* ── Clipboard helper ───────────────────────────────────────────────── */
   var EMAIL = 'kaist2718@gmail.com';
-  var copyBtn = document.getElementById('copyMailBtn');
 
-  if (copyBtn) {
-    copyBtn.addEventListener('click', function () {
-      var dict = currentDict();
+  function copyToClipboard(text, message) {
+    function done() { showToast(message); }
 
-      function done() { showToast(dict['contact.copied']); }
-
-      function fallback() {
-        var input = document.createElement('input');
-        input.value = EMAIL;
-        input.setAttribute('readonly', 'readonly');
-        input.style.position = 'fixed';
-        input.style.opacity = '0';
-        document.body.appendChild(input);
-        input.select();
-        try {
-          document.execCommand('copy');
-          done();
-        } catch (err) {
-          showToast(dict['contact.copyFailed']);
-        }
-        document.body.removeChild(input);
+    function fallback() {
+      var area = document.createElement('textarea');
+      area.value = text;
+      area.setAttribute('readonly', 'readonly');
+      area.style.position = 'fixed';
+      area.style.opacity = '0';
+      document.body.appendChild(area);
+      area.select();
+      try {
+        document.execCommand('copy');
+        done();
+      } catch (err) {
+        showToast(currentDict()['contact.copyFailed']);
       }
+      document.body.removeChild(area);
+    }
 
-      if (navigator.clipboard && navigator.clipboard.writeText) {
-        navigator.clipboard.writeText(EMAIL).then(done, fallback);
-      } else {
-        fallback();
-      }
+    if (navigator.clipboard && navigator.clipboard.writeText) {
+      navigator.clipboard.writeText(text).then(done, fallback);
+    } else {
+      fallback();
+    }
+  }
+
+  var copyMailBtn = document.getElementById('copyMailBtn');
+
+  if (copyMailBtn) {
+    copyMailBtn.addEventListener('click', function () {
+      copyToClipboard(EMAIL, currentDict()['contact.copied']);
     });
   }
 
-  /* ── Contact form → mailto ──────────────────────────────────────────── */
+  /* ── Contact form ───────────────────────────────────────────────────── */
   var form = document.getElementById('contactForm');
+  var MAX_MESSAGE = 2000;
 
   if (form) {
+    var nameEl = document.getElementById('cfName');
+    var emailEl = document.getElementById('cfEmail');
+    var msgEl = document.getElementById('cfMsg');
+    var countEl = document.getElementById('cfCount');
+    var preview = document.getElementById('mailPreview');
+    var previewSubject = document.getElementById('mailPreviewSubject');
+    var previewBody = document.getElementById('mailPreviewBody');
+    var intentTabs = document.querySelectorAll('.intent-tab');
+    var gmailBtn = document.getElementById('sendGmailBtn');
+    var copyBodyBtn = document.getElementById('copyBodyBtn');
+    var activeIntent = 'general';
+
+    if (msgEl) msgEl.setAttribute('maxlength', String(MAX_MESSAGE));
+
+    function showError(id, message) {
+      var box = document.getElementById(id);
+      if (!box) return;
+      box.textContent = message || '';
+      box.hidden = !message;
+    }
+
+    function validEmail(value) {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+    }
+
+    function composedMail() {
+      var dict = currentDict();
+      var name = nameEl.value.trim();
+      var email = emailEl.value.trim();
+      var subject = dict['contact.subject.' + activeIntent] + (name ? ' — ' + name : '');
+      var lines = [];
+
+      if (name) lines.push(dict['form.name'] + ': ' + name);
+      if (email) lines.push(dict['form.email'] + ': ' + email);
+      if (lines.length) lines.push('');
+      lines.push(msgEl.value.trim());
+
+      return { subject: subject, body: lines.join('\n') };
+    }
+
+    function validate() {
+      var dict = currentDict();
+      var ok = true;
+
+      showError('cfNameErr', '');
+      showError('cfEmailErr', '');
+      showError('cfMsgErr', '');
+
+      if (!nameEl.value.trim()) { showError('cfNameErr', dict['form.needName']); ok = false; }
+      if (!validEmail(emailEl.value.trim())) { showError('cfEmailErr', dict['form.needEmail']); ok = false; }
+      if (!msgEl.value.trim()) { showError('cfMsgErr', dict['form.needMessage']); ok = false; }
+
+      if (!ok) {
+        var firstError = form.querySelector('.field-error:not([hidden])');
+        if (firstError) {
+          var field = firstError.parentNode.querySelector('input, textarea') ||
+            form.querySelector('.field-error:not([hidden]) ~ input');
+          if (field && field.focus) field.focus();
+        }
+      }
+
+      return ok;
+    }
+
+    function syncPreview() {
+      if (!preview) return;
+
+      var mail = composedMail();
+      var hasInput = !!(nameEl.value.trim() || msgEl.value.trim());
+
+      preview.hidden = !hasInput;
+      if (!hasInput) return;
+      if (previewSubject) previewSubject.textContent = mail.subject;
+      if (previewBody) previewBody.textContent = mail.body;
+    }
+
+    function updateCount() {
+      if (countEl && msgEl) {
+        countEl.textContent = msgEl.value.length + ' / ' + MAX_MESSAGE;
+      }
+    }
+
+    /* 유형 탭 */
+    Array.prototype.forEach.call(intentTabs, function (tab) {
+      tab.addEventListener('click', function () {
+        activeIntent = tab.getAttribute('data-intent');
+        Array.prototype.forEach.call(intentTabs, function (other) {
+          var on = other === tab;
+          other.classList.toggle('is-active', on);
+          other.setAttribute('aria-pressed', on ? 'true' : 'false');
+        });
+        syncPreview();
+      });
+    });
+
+    [nameEl, emailEl, msgEl].forEach(function (field) {
+      if (!field) return;
+      field.addEventListener('input', function () {
+        updateCount();
+        syncPreview();
+      });
+    });
+
+    /* 1) 기본 메일 앱 */
     form.addEventListener('submit', function (e) {
       e.preventDefault();
+      if (!validate()) return;
 
-      var dict = currentDict();
-      var nameEl = document.getElementById('cfName');
-      var emailEl = document.getElementById('cfEmail');
-      var msgEl = document.getElementById('cfMsg');
-      var hint = document.getElementById('formHint');
-
-      function invalid(el, message) {
-        hint.textContent = message;
-        hint.classList.add('is-error');
-        el.focus();
-      }
-
-      hint.classList.remove('is-error');
-      hint.textContent = dict['form.hint'];
-
-      if (!nameEl.value.trim()) return invalid(nameEl, dict['form.needName']);
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailEl.value.trim())) {
-        return invalid(emailEl, dict['form.needEmail']);
-      }
-      if (!msgEl.value.trim()) return invalid(msgEl, dict['form.needMessage']);
-
-      var subject = dict['form.subject'] + ' — ' + nameEl.value.trim();
-      var body = nameEl.value.trim() + ' (' + emailEl.value.trim() + ')\n\n' + msgEl.value.trim();
-
+      var mail = composedMail();
       window.location.href = 'mailto:' + EMAIL +
-        '?subject=' + encodeURIComponent(subject) +
-        '&body=' + encodeURIComponent(body);
+        '?subject=' + encodeURIComponent(mail.subject) +
+        '&body=' + encodeURIComponent(mail.body);
 
-      showToast(dict['form.opened']);
+      showToast(currentDict()['form.opened']);
     });
+
+    /* 2) Gmail 새 창 (메일 앱이 없는 환경) */
+    if (gmailBtn) {
+      gmailBtn.addEventListener('click', function () {
+        if (!validate()) return;
+
+        var mail = composedMail();
+        window.open(
+          'https://mail.google.com/mail/?view=cm&fs=1' +
+          '&to=' + encodeURIComponent(EMAIL) +
+          '&su=' + encodeURIComponent(mail.subject) +
+          '&body=' + encodeURIComponent(mail.body),
+          '_blank',
+          'noopener'
+        );
+      });
+    }
+
+    /* 3) 본문 복사 (어디에든 붙여넣기) */
+    if (copyBodyBtn) {
+      copyBodyBtn.addEventListener('click', function () {
+        if (!validate()) return;
+
+        var mail = composedMail();
+        copyToClipboard(mail.subject + '\n\n' + mail.body, currentDict()['form.bodyCopied']);
+      });
+    }
+
+    updateCount();
   }
 
   /* ── Motion preference ──────────────────────────────────────────────── */

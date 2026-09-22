@@ -89,6 +89,10 @@ var MAGAZINE_ISSUES = [
             'The moment you say when, the past simple takes over. Compare the two sentences side by side.'
           ]
         },
+        quote: {
+          ko: '경험에는 시점이 없고, 시점을 말하면 경험이 사라집니다.',
+          en: 'Experience has no date. Say the date and the experience becomes an event.'
+        },
         items: [
           { en: 'I have been to Japan twice.', ko: '나는 일본에 두 번 가본 적이 있다.', note: '경험 → 현재완료' },
           { en: 'I went to Japan in 2024.', ko: '나는 2024년에 일본에 갔다.', note: '시점을 말하면 → 과거시제' },
@@ -106,6 +110,10 @@ var MAGAZINE_ISSUES = [
         intro: {
           ko: '직역하면 뜻이 통하지 않습니다. 통째로 외우는 편이 빠릅니다.',
           en: 'Word-for-word translation will not help. Learn these as single chunks.'
+        },
+        quote: {
+          ko: '이디엄은 단어가 아니라 덩어리로 외웁니다. 직역은 도움이 안 됩니다.',
+          en: 'Idioms are chunks, not words. Translating them one by one will not help.'
         },
         items: [
           { en: 'catch a flight', ko: '비행기를 타다 (시간 맞춰)', note: 'catch → caught · "I have to catch a flight at six."' },
@@ -198,6 +206,10 @@ var MAGAZINE_ISSUES = [
             'Tipping is one of the easiest things to get wrong. Where it is expected, it is part of the price of service, not a sign of friendliness.',
             'Where it is not expected, offering it can be awkward. Carry a little cash and quietly ask at the counter — that is the safest route.'
           ]
+        },
+        quote: {
+          ko: '팁은 친절의 표시가 아니라 값의 일부입니다.',
+          en: 'A tip is part of the price, not a sign of friendliness.'
         },
         items: [
           { en: 'Is the tip included?', ko: '팁이 포함되어 있나요?', note: '계산서에 붙은 tip included를 먼저 확인하세요' },
