@@ -76,6 +76,13 @@
     return node;
   }
 
+  /* 학습 콘텐츠에 언어를 표시합니다.
+     한국어 화면에서도 영어 지문은 화면 낭독기와 브라우저 음성이 영어로 읽습니다. */
+  function langTag(node, code) {
+    node.setAttribute('lang', code);
+    return node;
+  }
+
   function plain(text) { return String(text).replace(/\*\*/g, ''); }
 
   function pad(n) { return String(n).length < 2 ? '0' + n : String(n); }
@@ -168,6 +175,36 @@
     syncDoneButtons();
   }
 
+  /* ── 듣기 속도 ────────────────────────────────────────────────────── */
+  var RATE_KEY = 'monsterlab.rate';
+  var RATES = [0.75, 0.92, 1.15];   /* 느리게 · 보통(0.92) · 빠르게 */
+  var speechRate = 0.92;
+
+  function setupRate() {
+    var buttons = document.querySelectorAll('[data-rate]');
+    if (!buttons.length) return;
+
+    var saved = store(RATE_KEY, 0.92);
+    speechRate = RATES.indexOf(saved) === -1 ? 0.92 : saved;
+
+    Array.prototype.forEach.call(buttons, function (btn) {
+      var rate = parseFloat(btn.getAttribute('data-rate'));
+
+      btn.setAttribute('aria-pressed', rate === speechRate ? 'true' : 'false');
+
+      btn.addEventListener('click', function () {
+        speechRate = rate;
+        save(RATE_KEY, rate);
+
+        Array.prototype.forEach.call(buttons, function (other) {
+          other.setAttribute('aria-pressed', other === btn ? 'true' : 'false');
+        });
+
+        api.toast(t('mag.rateSaved'));
+      });
+    });
+  }
+
   /* ── 오디오 (브라우저 음성합성, 비용 0) ─────────────────────────────── */
   function sectionAudioText(section) {
     var parts = [];
@@ -206,7 +243,7 @@
 
     var utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = 'en-US';
-    utterance.rate = 0.92;
+    utterance.rate = speechRate;
 
     utterance.onend = function () {
       setSpeaking(btn, false);
@@ -409,7 +446,7 @@
     });
     tools.appendChild(audioBtn);
 
-    var doneBtn = el('button', 'm-btn m-done');
+    var doneBtn = el('button', 'm-btn');
     doneBtn.type = 'button';
     doneBtn.setAttribute('data-done-for', section.id);
     doneBtn.addEventListener('click', function () { toggleDone(section.id); });
@@ -417,14 +454,16 @@
 
     head.appendChild(tools);
 
-    if (section.intro) inner.appendChild(el('p', 'm-intro', pick(section.intro)));
+    if (section.intro) {
+      inner.appendChild(langTag(el('p', 'm-intro', pick(section.intro)), lang()));
+    }
 
     /* 본문 문단 */
     if (section.body) {
       var paragraphs = section.body[lang()] || section.body.ko || section.body.en || [];
       var bodyBox = el('div', 'm-body');
       paragraphs.forEach(function (text) {
-        bodyBox.appendChild(elRich('p', null, text));
+        bodyBox.appendChild(langTag(elRich('p', null, text), lang()));
       });
       inner.appendChild(bodyBox);
     }
@@ -432,7 +471,7 @@
     /* 강조 인용 */
     if (section.quote) {
       var quote = el('blockquote', 'm-quote');
-      quote.appendChild(el('p', null, pick(section.quote)));
+      quote.appendChild(langTag(el('p', null, pick(section.quote)), lang()));
       inner.appendChild(quote);
     }
 
@@ -443,12 +482,12 @@
         var li = el('li', 'm-item');
 
         var text = el('div', 'm-item-text');
-        text.appendChild(el('span', 'm-item-en', entry.en));
-        text.appendChild(el('span', 'm-item-ko', entry.ko));
+        text.appendChild(langTag(el('span', 'm-item-en', entry.en), 'en'));
+        text.appendChild(langTag(el('span', 'm-item-ko', entry.ko), 'ko'));
         if (entry.note) text.appendChild(el('span', 'm-item-note', entry.note));
         li.appendChild(text);
 
-        var saveBtn = el('button', 'm-btn m-save');
+        var saveBtn = el('button', 'm-btn');
         saveBtn.type = 'button';
         saveBtn.setAttribute('data-save-for', entry.en);
         saveBtn.addEventListener('click', function () {
@@ -484,8 +523,8 @@
 
         var bubble = el('div', 'm-bubble');
         bubble.appendChild(el('span', 'm-who', line.who));
-        bubble.appendChild(el('span', 'm-bubble-en', line.en));
-        bubble.appendChild(el('span', 'm-bubble-ko', line.ko));
+        bubble.appendChild(langTag(el('span', 'm-bubble-en', line.en), 'en'));
+        bubble.appendChild(langTag(el('span', 'm-bubble-ko', line.ko), 'ko'));
         row.appendChild(bubble);
 
         dialogue.appendChild(row);
@@ -497,7 +536,7 @@
     if (section.questions && section.questions.length) {
       var questions = el('ol', 'm-questions');
       section.questions.forEach(function (q) {
-        questions.appendChild(el('li', null, pick(q)));
+        questions.appendChild(langTag(el('li', null, pick(q)), lang()));
       });
       inner.appendChild(questions);
     }
@@ -539,7 +578,7 @@
     var box = el('div', 'quiz-item');
     var letters = 'ABCDEFGH';
 
-    var q = elRich('p', 'quiz-q', pick(item.q));
+    var q = langTag(elRich('p', 'quiz-q', pick(item.q)), lang());
     q.insertBefore(el('span', 'quiz-num', String(index + 1)), q.firstChild);
     box.appendChild(q);
 
@@ -549,7 +588,7 @@
       var btn = el('button', 'quiz-opt');
       btn.type = 'button';
       btn.appendChild(el('span', 'quiz-letter', letters.charAt(oi) || String(oi + 1)));
-      btn.appendChild(el('span', 'quiz-text', option));
+      btn.appendChild(langTag(el('span', 'quiz-text', option), 'en'));
 
       btn.addEventListener('click', function () {
         if (box.getAttribute('data-answered') === 'true') return;
@@ -565,11 +604,11 @@
 
         var feedback = el('p', 'quiz-feedback ' + (correct ? 'is-correct' : 'is-wrong'));
         feedback.appendChild(el('span', 'quiz-feedback-icon', correct ? '✓' : '!'));
-        feedback.appendChild(el(
+        feedback.appendChild(langTag(el(
           'span',
           null,
           (correct ? t('mag.quizCorrect') : t('mag.quizWrong')) + ' — ' + pick(item.explain)
-        ));
+        ), lang()));
         box.appendChild(feedback);
       });
 
@@ -631,8 +670,8 @@
       var li = el('li', 'wb-item');
 
       var text = el('div', 'wb-text');
-      text.appendChild(el('span', 'wb-en', word.en));
-      text.appendChild(el('span', 'wb-ko', word.ko));
+      text.appendChild(langTag(el('span', 'wb-en', word.en), 'en'));
+      text.appendChild(langTag(el('span', 'wb-ko', word.ko), 'ko'));
       if (word.note) text.appendChild(el('span', 'wb-note', word.note));
       if (word.section) text.appendChild(el('span', 'wb-from', word.section));
       li.appendChild(text);
@@ -717,6 +756,7 @@
     renderWordbook();
     updateCounts();
     setupReadBar();
+    setupRate();
 
     /* 언어가 바뀌면 그려진 문구도 다시 그립니다 (script.js가 보내는 이벤트) */
     document.addEventListener('langchange', function () {

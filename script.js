@@ -1,8 +1,22 @@
-/* MonsterLab — interactions: language toggle, mobile nav, misc */
+/* MonsterLab — 페이지 공통 동작
+   ==========================================================================
+
+   구조
+     1. i18n 사전
+     2. 공용 API  → window.MonsterLab (magazine.js 같은 다른 페이지 스크립트가 씁니다)
+     3. 언어 전환
+     4. 기능별 초기화 — 모두 guard()로 격리
+
+   왜 이렇게 나눴나:
+     예전에는 모든 기능이 한 줄기로 실행됐습니다. 그래서 테마 초기화가 예외로
+     죽으면 그 뒤에 있던 언어 버튼 리스너도 함께 죽어, "테마 아이콘이 안 보이고
+     언어 전환도 안 되는" 증상이 한 번에 나타났습니다. 이제 기능 하나가 실패해도
+     나머지는 그대로 동작하고, 실패한 기능만 콘솔에 남습니다.
+   ========================================================================== */
 (function () {
   'use strict';
 
-  /* ── i18n ───────────────────────────────────────────────────────────── */
+  /* ── 1. i18n 사전 ───────────────────────────────────────────────────── */
   var I18N = {
     ko: {
       'nav.about': '소개',
@@ -146,6 +160,9 @@
       'mag.wbClearConfirm': '저장한 단어를 모두 지울까요?',
       'mag.progressLabel': '읽기 진행',
       'mag.minSuffix': '분',
+      'mag.rateLabel': '듣기 속도',
+      'mag.rateGroup': '듣기 속도 선택',
+      'mag.rateSaved': '듣기 속도를 바꿨습니다',
       'mag.resume': '이어서 읽기',
       'mag.nextSection': '다음 섹션',
       'mag.nextNote': '보통 영업일 기준 2~3일 안에 답장드립니다.',
@@ -176,6 +193,11 @@
       'mag.kind.quiz': '확인 문제',
       'mag.kind.humor': '유머',
       'mag.kind.note': '해설 노트',
+
+      'page.title': 'MonsterLab — 작은 아이디어를 괴물 같은 서비스로',
+      'page.desc': 'MonsterLab는 학습부터 도구까지, 사람들이 매일 쓰는 서비스를 만듭니다. 지금 toeic.monster를 운영 중입니다.',
+      'mag.pageTitle': '1호 · 월간 영어 매거진 — MonsterLab',
+      'mag.pageDesc': '여행 영어를 테마로 한 1호. 어휘·문법·이디엄·대화·확인 문제를 오디오와 함께 읽는 월간 영어 매거진.',
 
       'footer.rights': '모든 권리 보유.'
     },
@@ -322,6 +344,9 @@
       'mag.wbClearConfirm': 'Remove every saved word?',
       'mag.progressLabel': 'Reading progress',
       'mag.minSuffix': ' min',
+      'mag.rateLabel': 'Listening speed',
+      'mag.rateGroup': 'Choose the listening speed',
+      'mag.rateSaved': 'Listening speed updated',
       'mag.resume': 'Continue',
       'mag.nextSection': 'Next section',
       'mag.nextNote': 'We usually reply within two to three business days.',
@@ -353,222 +378,41 @@
       'mag.kind.humor': 'Humour',
       'mag.kind.note': 'Notes',
 
+      'page.title': 'MonsterLab — Small ideas into monster services',
+      'page.desc': 'MonsterLab builds services people open every day. We run toeic.monster today, with more experiments on the way.',
+      'mag.pageTitle': 'Issue 1 · Monthly English magazine — MonsterLab',
+      'mag.pageDesc': 'Issue 1 on travel English: vocabulary, grammar, idioms, dialogue and a quiz, read alongside audio.',
+
       'footer.rights': 'All rights reserved.'
     }
   };
 
   var STORAGE_KEY = 'monsterlab.lang';
   var DEFAULT_LANG = 'ko';
+  var EMAIL = 'kaist2718@gmail.com';
 
-  /* applyLang이 초기 호출될 때도 필요하므로 여기서 미리 선언합니다. */
-  var THEME_LABEL_KEYS = { light: 'theme.light', dark: 'theme.dark', system: 'theme.system' };
-  var THEME_ACTION_KEYS = { light: 'theme.setLight', dark: 'theme.setDark', system: 'theme.setSystem' };
-
+  var htmlEl = document.documentElement;
   var langBtn = document.getElementById('langBtn');
   var langLabel = document.getElementById('langLabel');
-  var htmlEl = document.documentElement;
+  var titleKey = htmlEl.getAttribute('data-title-key');
+  var descKey = htmlEl.getAttribute('data-desc-key');
 
-  function applyLang(lang) {
-    var dict = I18N[lang] || I18N[DEFAULT_LANG];
-
-    document.querySelectorAll('[data-i18n]').forEach(function (el) {
-      var value = dict[el.getAttribute('data-i18n')];
-      if (value != null) el.textContent = value;
-    });
-
-    document.querySelectorAll('[data-i18n-html]').forEach(function (el) {
-      var value = dict[el.getAttribute('data-i18n-html')];
-      if (value != null) el.innerHTML = value;
-    });
-
-    document.querySelectorAll('[data-i18n-placeholder]').forEach(function (el) {
-      var value = dict[el.getAttribute('data-i18n-placeholder')];
-      if (value != null) el.setAttribute('placeholder', value);
-    });
-
-    document.querySelectorAll('[data-i18n-aria-label]').forEach(function (el) {
-      var value = dict[el.getAttribute('data-i18n-aria-label')];
-      if (value != null) el.setAttribute('aria-label', value);
-    });
-
-    var hintEl = document.getElementById('formHint');
-    if (hintEl) hintEl.classList.remove('is-error');
-
-    htmlEl.setAttribute('lang', lang);
-    langLabel.textContent = lang === 'ko' ? 'EN' : 'KO';
-    langBtn.setAttribute('aria-label', lang === 'ko' ? 'Switch to English' : '한국어로 전환');
-
-    /* 테마 버튼·강조색 스와치의 라벨도 바뀜 언어로 다시 그림 (저장하지 않음) */
-    applyTheme(currentMode());
-    if (swatchBtns) applyAccent(currentAccent());
-
-    try { localStorage.setItem(STORAGE_KEY, lang); } catch (e) { /* private mode */ }
-
-    /* 다른 페이지 스크립트(magazine.js)가 그려놓은 문구도 다시 그리도록 알립니다 */
-    if (typeof window.CustomEvent === 'function') {
-      document.dispatchEvent(new CustomEvent('langchange', { detail: { lang: lang } }));
-    }
+  function currentLang() {
+    var lang = htmlEl.getAttribute('lang');
+    return I18N[lang] ? lang : DEFAULT_LANG;
   }
 
-  var savedLang;
-  try { savedLang = localStorage.getItem(STORAGE_KEY); } catch (e) { savedLang = null; }
-  applyLang(savedLang === 'en' ? 'en' : DEFAULT_LANG);
-
-  langBtn.addEventListener('click', function () {
-    applyLang(htmlEl.getAttribute('lang') === 'ko' ? 'en' : 'ko');
-  });
-
-  /* ── Theme (dark / light / system) ───────────────────────────────────────────── */
-  var THEME_KEY = 'monsterlab.theme';
-  var THEME_MODES = ['light', 'dark', 'system'];
-  var THEME_ICONS = { dark: '🌙', light: '☀️', system: '🖥️' };
-  var THEME_COLORS = { dark: '#0a0e13', light: '#fbfcfd' };
-
-  var themeSets = document.querySelectorAll('[data-theme-set]');
-  var themeOptionBtns = [];
-  var footerTheme = document.getElementById('footerTheme');
-  var themeColorMeta = document.querySelector('meta[name="theme-color"]');
-
-  function systemTheme() {
-    return (window.matchMedia &&
-      window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+  function currentDict() {
+    return I18N[currentLang()] || I18N[DEFAULT_LANG];
   }
 
-  /* 인라인 스크립트가 첫 페인트 전에 심어둔 모드. 없으면 시스템 */
-  function currentMode() {
-    var mode = htmlEl.getAttribute('data-theme-mode');
-    return THEME_MODES.indexOf(mode) !== -1 ? mode : 'system';
+  /* 키가 없으면 키 이름을 그대로 돌려줍니다 — 화면에서 누락을 바로 알아챌 수 있게.
+     magazine.js가 이 함수를 쓰므로, 다른 초기화보다 먼저 준비해야 합니다. */
+  function t(key, lang) {
+    var dict = I18N[lang] || currentDict();
+    return dict[key] != null ? dict[key] : key;
   }
 
-  function applyTheme(mode, persist) {
-    var theme = mode === 'system' ? systemTheme() : mode;
-    var dict = currentDict();
-
-    htmlEl.setAttribute('data-theme-mode', mode);
-    htmlEl.setAttribute('data-theme', theme);
-
-    /* 헤더·모바일 메뉴의 버튼 모두 같은 선택 상태를 보여줍니다 */
-    if (themeOptionBtns) {
-      Array.prototype.forEach.call(themeOptionBtns, function (btn) {
-        var option = btn.getAttribute('data-theme-option');
-        var action = dict[THEME_ACTION_KEYS[option]];
-
-        btn.setAttribute('aria-pressed', option === mode ? 'true' : 'false');
-        btn.setAttribute('aria-label', action);
-        btn.setAttribute('title', action);
-      });
-    }
-
-    if (footerTheme && THEME_LABEL_KEYS[mode]) footerTheme.textContent = dict[THEME_LABEL_KEYS[mode]];
-    if (themeColorMeta) themeColorMeta.setAttribute('content', THEME_COLORS[theme]);
-
-    if (persist) {
-      try { localStorage.setItem(THEME_KEY, mode); } catch (e) { /* private mode */ }
-    }
-  }
-
-  /* 헤더·모바일 메뉴의 빈 자리([data-theme-set])에 버튼 3개를 채웁니다.
-     순환 버튼이 아니라 선택 버튼입니다 — 시스템 모드에서 색이 그대로인
-     순간에도 어느 모드를 고른 것인지 눈에 보입니다. */
-  function buildThemeSets() {
-    Array.prototype.forEach.call(themeSets, function (set) {
-      THEME_MODES.forEach(function (mode) {
-        var btn = document.createElement('button');
-        btn.className = 'theme-opt';
-        btn.type = 'button';
-        btn.setAttribute('data-theme-option', mode);
-        btn.setAttribute('aria-pressed', 'false');
-
-        var icon = document.createElement('span');
-        icon.setAttribute('aria-hidden', 'true');
-        icon.textContent = THEME_ICONS[mode];
-        btn.appendChild(icon);
-
-        btn.addEventListener('click', function () { applyTheme(mode, true); });
-
-        set.appendChild(btn);
-        themeOptionBtns.push(btn);
-      });
-    });
-  }
-
-  buildThemeSets();
-
-  /* 인라인 스크립트가 정한 값을 UI에 반영 (저장은 하지 않음) */
-  applyTheme(currentMode());
-
-  /* '시스템' 모드일 때는 OS 설정이 바뀌면 바로 따라갑니다 */
-  if (window.matchMedia) {
-    var schemeQuery = window.matchMedia('(prefers-color-scheme: light)');
-    var onSchemeChange = function () {
-      if (currentMode() === 'system') applyTheme('system');
-    };
-
-    if (schemeQuery.addEventListener) schemeQuery.addEventListener('change', onSchemeChange);
-    else if (schemeQuery.addListener) schemeQuery.addListener(onSchemeChange);
-  }
-
-  /* ── Accent color presets ───────────────────────────────────────────── */
-  var ACCENT_KEY = 'monsterlab.accent';
-  var ACCENT_NAMES = ['mint', 'violet', 'ocean', 'amber'];
-  var swatchBtns = document.querySelectorAll('.swatch');
-
-  function currentAccent() {
-    var name = htmlEl.getAttribute('data-accent');
-    return ACCENT_NAMES.indexOf(name) !== -1 ? name : 'mint';
-  }
-
-  function applyAccent(name, persist) {
-    var dict = currentDict();
-
-    htmlEl.setAttribute('data-accent', name);
-
-    swatchBtns.forEach(function (btn) {
-      var label = dict['accent.' + btn.getAttribute('data-accent')];
-      var active = btn.getAttribute('data-accent') === name;
-
-      btn.setAttribute('aria-label', label);
-      btn.setAttribute('title', label);
-      btn.setAttribute('aria-pressed', active ? 'true' : 'false');
-    });
-
-    if (persist) {
-      try { localStorage.setItem(ACCENT_KEY, name); } catch (e) { /* private mode */ }
-    }
-  }
-
-  swatchBtns.forEach(function (btn) {
-    btn.addEventListener('click', function () {
-      applyAccent(btn.getAttribute('data-accent'), true);
-    });
-  });
-
-  /* 인라인 스크립트가 정한 프리셋을 UI에 반영 (저장은 하지 않음) */
-  applyAccent(currentAccent());
-
-  /* ── Mobile nav ─────────────────────────────────────────────────────── */
-  var menuBtn = document.getElementById('menuBtn');
-  var nav = document.getElementById('nav');
-
-  function closeNav() {
-    nav.classList.remove('is-open');
-    menuBtn.setAttribute('aria-expanded', 'false');
-  }
-
-  menuBtn.addEventListener('click', function () {
-    var open = nav.classList.toggle('is-open');
-    menuBtn.setAttribute('aria-expanded', String(open));
-  });
-
-  nav.addEventListener('click', function (e) {
-    if (e.target.tagName === 'A') closeNav();
-  });
-
-  document.addEventListener('keydown', function (e) {
-    if (e.key === 'Escape') closeNav();
-  });
-
-  /* ── Toast ──────────────────────────────────────────────────────────── */
   var toastEl = document.getElementById('toast');
   var toastTimer;
 
@@ -580,16 +424,252 @@
     toastTimer = setTimeout(function () { toastEl.hidden = true; }, 2600);
   }
 
-  function currentDict() {
-    return I18N[htmlEl.getAttribute('lang')] || I18N[DEFAULT_LANG];
+  /* ── 2. 공용 API ─────────────────────────────────────────────────────
+     먼저 노출합니다. 아래 기능 초기화가 실패해도 magazine.js는 이 API를
+     찾을 수 있습니다(없으면 화면에 'mag.listen' 같은 키 이름이 그대로 나옵니다). */
+  window.MonsterLab = {
+    t: t,
+    toast: showToast,
+    lang: currentLang,
+    dict: currentDict
+  };
+
+  /* ── 3. 공용 유틸 ──────────────────────────────────────────────────── */
+  function $(id) { return document.getElementById(id); }
+
+  function $$(selector) {
+    return Array.prototype.slice.call(document.querySelectorAll(selector));
   }
 
-  /* ── Clipboard helper ───────────────────────────────────────────────── */
-  var EMAIL = 'kaist2718@gmail.com';
+  function on(el, type, handler, options) {
+    if (el && el.addEventListener) el.addEventListener(type, handler, options);
+  }
 
+  function readStore(key) {
+    try { return localStorage.getItem(key); } catch (e) { return null; } /* 시크릿 모드 */
+  }
+
+  function writeStore(key, value) {
+    try { localStorage.setItem(key, value); } catch (e) { /* 시크릿 모드 */ }
+  }
+
+  /* 기능 하나가 예외로 죽어도 나머지 기능과 언어 전환은 계속 동작하게 합니다. */
+  function guard(name, init) {
+    try {
+      init();
+    } catch (err) {
+      if (window.console && console.error) {
+        console.error('[MonsterLab] ' + name + ' 초기화 실패:', err);
+      }
+    }
+  }
+
+  var reduceMotion = !!(window.matchMedia &&
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+
+  /* ── 4. 언어 전환 ──────────────────────────────────────────────────── */
+  function applyLang(lang) {
+    var dict = I18N[lang] || I18N[DEFAULT_LANG];
+
+    $$('[data-i18n]').forEach(function (el) {
+      var value = dict[el.getAttribute('data-i18n')];
+      if (value != null) el.textContent = value;
+    });
+
+    $$('[data-i18n-html]').forEach(function (el) {
+      var value = dict[el.getAttribute('data-i18n-html')];
+      if (value != null) el.innerHTML = value;
+    });
+
+    $$('[data-i18n-placeholder]').forEach(function (el) {
+      var value = dict[el.getAttribute('data-i18n-placeholder')];
+      if (value != null) el.setAttribute('placeholder', value);
+    });
+
+    $$('[data-i18n-aria-label]').forEach(function (el) {
+      var value = dict[el.getAttribute('data-i18n-aria-label')];
+      if (value != null) el.setAttribute('aria-label', value);
+    });
+
+    /* 탭 제목과 설명도 함께 바꿔 영어 사용자에게 맞춥니다.
+       어떤 페이지인지는 <html data-title-key="..."> 가 알려줍니다. */
+    if (titleKey && dict[titleKey]) document.title = dict[titleKey];
+
+    if (descKey && dict[descKey]) {
+      var descEl = document.querySelector('meta[name="description"]');
+      if (descEl) descEl.setAttribute('content', dict[descKey]);
+    }
+
+    var hintEl = $('formHint');
+    if (hintEl) hintEl.classList.remove('is-error');
+
+    htmlEl.setAttribute('lang', lang);
+    if (langLabel) langLabel.textContent = lang === 'ko' ? 'EN' : 'KO';
+    if (langBtn) {
+      langBtn.setAttribute('aria-label', lang === 'ko' ? 'Switch to English' : '한국어로 전환');
+    }
+
+    writeStore(STORAGE_KEY, lang);
+
+    /* 다른 페이지 스크립트(magazine.js)가 그려놓은 문구도 다시 그리도록 알립니다 */
+    if (typeof window.CustomEvent === 'function') {
+      document.dispatchEvent(new CustomEvent('langchange', { detail: { lang: lang } }));
+    }
+  }
+
+  applyLang(readStore(STORAGE_KEY) === 'en' ? 'en' : DEFAULT_LANG);
+
+  on(langBtn, 'click', function () {
+    applyLang(currentLang() === 'ko' ? 'en' : 'ko');
+  });
+
+  on(document, 'keydown', function (e) {
+    /* 언어 전환 단축키: Alt + L (한/영 어느 쪽에서도 동작) */
+    if (e.altKey && (e.key === 'l' || e.key === 'L')) {
+      applyLang(currentLang() === 'ko' ? 'en' : 'ko');
+    }
+  });
+
+  /* ── 5. 테마 (라이트 / 다크 / 시스템) ──────────────────────────────── */
+  guard('테마', function () {
+    var THEME_KEY = 'monsterlab.theme';
+    var THEME_MODES = ['light', 'dark', 'system'];
+    var THEME_COLORS = { dark: '#0a0e13', light: '#fbfcfd' };
+    var THEME_LABEL_KEYS = { light: 'theme.light', dark: 'theme.dark', system: 'theme.system' };
+    var THEME_ACTION_KEYS = { light: 'theme.setLight', dark: 'theme.setDark', system: 'theme.setSystem' };
+
+    var themeOptionBtns = $$('[data-theme-option]');
+    var footerTheme = $('footerTheme');
+    var themeColorMeta = document.querySelector('meta[name="theme-color"]');
+
+    function systemTheme() {
+      return (window.matchMedia &&
+        window.matchMedia('(prefers-color-scheme: light)').matches) ? 'light' : 'dark';
+    }
+
+    /* 인라인 스크립트가 첫 페인트 전에 심어둔 모드. 없으면 시스템 */
+    function currentMode() {
+      var mode = htmlEl.getAttribute('data-theme-mode');
+      return THEME_MODES.indexOf(mode) !== -1 ? mode : 'system';
+    }
+
+    function applyTheme(mode, persist) {
+      var theme = mode === 'system' ? systemTheme() : mode;
+      var dict = currentDict();
+
+      htmlEl.setAttribute('data-theme-mode', mode);
+      htmlEl.setAttribute('data-theme', theme);
+
+      /* 헤더와 모바일 메뉴의 버튼이 항상 같은 선택 상태를 보여줍니다 */
+      themeOptionBtns.forEach(function (btn) {
+        var option = btn.getAttribute('data-theme-option');
+        var action = dict[THEME_ACTION_KEYS[option]];
+
+        btn.setAttribute('aria-pressed', option === mode ? 'true' : 'false');
+        btn.setAttribute('aria-label', action);
+        btn.setAttribute('title', action);
+      });
+
+      if (footerTheme && THEME_LABEL_KEYS[mode]) footerTheme.textContent = dict[THEME_LABEL_KEYS[mode]];
+      if (themeColorMeta) themeColorMeta.setAttribute('content', THEME_COLORS[theme]);
+
+      if (persist) writeStore(THEME_KEY, mode);
+    }
+
+    /* 버튼은 HTML에 있습니다(스크립트가 채우지 않음) — 스크립트가 멈춰도
+       선택지는 화면에 보입니다. 순환식이 아니라 선택식이라, 시스템 모드에서
+       색이 그대로인 순간에도 어느 모드를 골랐는지 눈에 보입니다. */
+    themeOptionBtns.forEach(function (btn) {
+      on(btn, 'click', function () {
+        applyTheme(btn.getAttribute('data-theme-option'), true);
+      });
+    });
+
+    document.addEventListener('langchange', function () { applyTheme(currentMode()); });
+
+    /* 인라인 스크립트가 정한 값을 UI에 반영 (저장은 하지 않음) */
+    applyTheme(currentMode());
+
+    /* '시스템' 모드일 때는 OS 설정이 바뀌면 바로 따라갑니다 */
+    if (window.matchMedia) {
+      var schemeQuery = window.matchMedia('(prefers-color-scheme: light)');
+      var onSchemeChange = function () {
+        if (currentMode() === 'system') applyTheme('system');
+      };
+
+      if (schemeQuery.addEventListener) schemeQuery.addEventListener('change', onSchemeChange);
+      else if (schemeQuery.addListener) schemeQuery.addListener(onSchemeChange);
+    }
+  });
+
+  /* ── 6. 강조색 프리셋 ──────────────────────────────────────────────── */
+  guard('강조색', function () {
+    var ACCENT_KEY = 'monsterlab.accent';
+    var ACCENT_NAMES = ['mint', 'violet', 'ocean', 'amber'];
+    var swatchBtns = $$('.swatch');
+
+    function currentAccent() {
+      var name = htmlEl.getAttribute('data-accent');
+      return ACCENT_NAMES.indexOf(name) !== -1 ? name : 'mint';
+    }
+
+    function applyAccent(name, persist) {
+      var dict = currentDict();
+
+      htmlEl.setAttribute('data-accent', name);
+
+      swatchBtns.forEach(function (btn) {
+        var label = dict['accent.' + btn.getAttribute('data-accent')];
+        var active = btn.getAttribute('data-accent') === name;
+
+        btn.setAttribute('aria-label', label);
+        btn.setAttribute('title', label);
+        btn.setAttribute('aria-pressed', active ? 'true' : 'false');
+      });
+
+      if (persist) writeStore(ACCENT_KEY, name);
+    }
+
+    swatchBtns.forEach(function (btn) {
+      on(btn, 'click', function () {
+        applyAccent(btn.getAttribute('data-accent'), true);
+      });
+    });
+
+    document.addEventListener('langchange', function () { applyAccent(currentAccent()); });
+
+    /* 인라인 스크립트가 정한 프리셋을 UI에 반영 (저장은 하지 않음) */
+    applyAccent(currentAccent());
+  });
+
+  /* ── 7. 모바일 메뉴 ────────────────────────────────────────────────── */
+  guard('모바일 메뉴', function () {
+    var menuBtn = $('menuBtn');
+    var nav = $('nav');
+
+    if (!menuBtn || !nav) return;
+
+    function closeNav() {
+      nav.classList.remove('is-open');
+      menuBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    on(menuBtn, 'click', function () {
+      var open = nav.classList.toggle('is-open');
+      menuBtn.setAttribute('aria-expanded', String(open));
+    });
+
+    on(nav, 'click', function (e) {
+      if (e.target && e.target.tagName === 'A') closeNav();
+    });
+
+    on(document, 'keydown', function (e) {
+      if (e.key === 'Escape') closeNav();
+    });
+  });
+
+  /* ── 8. 복사 (클립보드) ────────────────────────────────────────────── */
   function copyToClipboard(text, message) {
-    function done() { showToast(message); }
-
     function fallback() {
       var area = document.createElement('textarea');
       area.value = text;
@@ -598,51 +678,57 @@
       area.style.opacity = '0';
       document.body.appendChild(area);
       area.select();
-      try {
-        document.execCommand('copy');
-        done();
-      } catch (err) {
-        showToast(currentDict()['contact.copyFailed']);
-      }
+
+      var copied = false;
+      try { copied = document.execCommand('copy'); } catch (err) { copied = false; }
+
       document.body.removeChild(area);
+      showToast(copied ? message : currentDict()['contact.copyFailed']);
     }
 
     if (navigator.clipboard && navigator.clipboard.writeText) {
-      navigator.clipboard.writeText(text).then(done, fallback);
+      navigator.clipboard.writeText(text).then(
+        function () { showToast(message); },
+        fallback
+      );
     } else {
       fallback();
     }
   }
 
-  var copyMailBtn = document.getElementById('copyMailBtn');
+  guard('주소 복사', function () {
+    var copyMailBtn = $('copyMailBtn');
+    if (!copyMailBtn) return;
 
-  if (copyMailBtn) {
-    copyMailBtn.addEventListener('click', function () {
+    on(copyMailBtn, 'click', function () {
       copyToClipboard(EMAIL, currentDict()['contact.copied']);
     });
-  }
+  });
 
-  /* ── Contact form ───────────────────────────────────────────────────── */
-  var form = document.getElementById('contactForm');
-  var MAX_MESSAGE = 2000;
+  /* ── 9. 문의 폼 ────────────────────────────────────────────────────── */
+  guard('문의 폼', function () {
+    var form = $('contactForm');
+    if (!form) return;
 
-  if (form) {
-    var nameEl = document.getElementById('cfName');
-    var emailEl = document.getElementById('cfEmail');
-    var msgEl = document.getElementById('cfMsg');
-    var countEl = document.getElementById('cfCount');
-    var preview = document.getElementById('mailPreview');
-    var previewSubject = document.getElementById('mailPreviewSubject');
-    var previewBody = document.getElementById('mailPreviewBody');
-    var intentTabs = document.querySelectorAll('.intent-tab');
-    var gmailBtn = document.getElementById('sendGmailBtn');
-    var copyBodyBtn = document.getElementById('copyBodyBtn');
+    var MAX_MESSAGE = 2000;
+    var nameEl = $('cfName');
+    var emailEl = $('cfEmail');
+    var msgEl = $('cfMsg');
+    var countEl = $('cfCount');
+    var preview = $('mailPreview');
+    var previewSubject = $('mailPreviewSubject');
+    var previewBody = $('mailPreviewBody');
+    var intentTabs = $$('.intent-tab');
+    var gmailBtn = $('sendGmailBtn');
+    var copyBodyBtn = $('copyBodyBtn');
     var activeIntent = 'general';
 
-    if (msgEl) msgEl.setAttribute('maxlength', String(MAX_MESSAGE));
+    if (!nameEl || !emailEl || !msgEl) return;
+
+    msgEl.setAttribute('maxlength', String(MAX_MESSAGE));
 
     function showError(id, message) {
-      var box = document.getElementById(id);
+      var box = $(id);
       if (!box) return;
       box.textContent = message || '';
       box.hidden = !message;
@@ -682,8 +768,8 @@
       if (!ok) {
         var firstError = form.querySelector('.field-error:not([hidden])');
         if (firstError) {
-          var field = firstError.parentNode.querySelector('input, textarea') ||
-            form.querySelector('.field-error:not([hidden]) ~ input');
+          var field = firstError.parentNode &&
+            firstError.parentNode.querySelector('input, textarea');
           if (field && field.focus) field.focus();
         }
       }
@@ -704,34 +790,30 @@
     }
 
     function updateCount() {
-      if (countEl && msgEl) {
-        countEl.textContent = msgEl.value.length + ' / ' + MAX_MESSAGE;
-      }
+      if (countEl) countEl.textContent = msgEl.value.length + ' / ' + MAX_MESSAGE;
     }
 
-    /* 유형 탭 */
-    Array.prototype.forEach.call(intentTabs, function (tab) {
-      tab.addEventListener('click', function () {
+    intentTabs.forEach(function (tab) {
+      on(tab, 'click', function () {
         activeIntent = tab.getAttribute('data-intent');
-        Array.prototype.forEach.call(intentTabs, function (other) {
-          var on = other === tab;
-          other.classList.toggle('is-active', on);
-          other.setAttribute('aria-pressed', on ? 'true' : 'false');
+        intentTabs.forEach(function (other) {
+          var active = other === tab;
+          other.classList.toggle('is-active', active);
+          other.setAttribute('aria-pressed', active ? 'true' : 'false');
         });
         syncPreview();
       });
     });
 
     [nameEl, emailEl, msgEl].forEach(function (field) {
-      if (!field) return;
-      field.addEventListener('input', function () {
+      on(field, 'input', function () {
         updateCount();
         syncPreview();
       });
     });
 
     /* 1) 기본 메일 앱 */
-    form.addEventListener('submit', function (e) {
+    on(form, 'submit', function (e) {
       e.preventDefault();
       if (!validate()) return;
 
@@ -744,110 +826,99 @@
     });
 
     /* 2) Gmail 새 창 (메일 앱이 없는 환경) */
-    if (gmailBtn) {
-      gmailBtn.addEventListener('click', function () {
-        if (!validate()) return;
+    on(gmailBtn, 'click', function () {
+      if (!validate()) return;
 
-        var mail = composedMail();
-        window.open(
-          'https://mail.google.com/mail/?view=cm&fs=1' +
-          '&to=' + encodeURIComponent(EMAIL) +
-          '&su=' + encodeURIComponent(mail.subject) +
-          '&body=' + encodeURIComponent(mail.body),
-          '_blank',
-          'noopener'
-        );
-      });
-    }
+      var mail = composedMail();
+      window.open(
+        'https://mail.google.com/mail/?view=cm&fs=1' +
+        '&to=' + encodeURIComponent(EMAIL) +
+        '&su=' + encodeURIComponent(mail.subject) +
+        '&body=' + encodeURIComponent(mail.body),
+        '_blank',
+        'noopener'
+      );
+    });
 
     /* 3) 본문 복사 (어디에든 붙여넣기) */
-    if (copyBodyBtn) {
-      copyBodyBtn.addEventListener('click', function () {
-        if (!validate()) return;
+    on(copyBodyBtn, 'click', function () {
+      if (!validate()) return;
 
-        var mail = composedMail();
-        copyToClipboard(mail.subject + '\n\n' + mail.body, currentDict()['form.bodyCopied']);
-      });
-    }
+      var mail = composedMail();
+      copyToClipboard(mail.subject + '\n\n' + mail.body, currentDict()['form.bodyCopied']);
+    });
 
     updateCount();
-  }
+  });
 
-  /* ── Motion preference ──────────────────────────────────────────────── */
-  var reduceMotion = !!(window.matchMedia &&
-    window.matchMedia('(prefers-reduced-motion: reduce)').matches);
+  /* ── 10. 스크롤 등장 ───────────────────────────────────────────────── */
+  guard('스크롤 등장', function () {
+    if (reduceMotion || !('IntersectionObserver' in window)) return;
 
-  /* ── Scroll reveal ──────────────────────────────────────────────────── */
-  var revealTargets = document.querySelectorAll('.card, .service, .timeline > li, .faq, .preview-window');
+    var targets = $$('.card, .service, .timeline > li, .faq, .preview-window');
+    if (!targets.length) return;
 
-  if (!reduceMotion && 'IntersectionObserver' in window) {
     document.documentElement.classList.add('reveal-ready');
 
-    var revealObserver = new IntersectionObserver(function (entries) {
+    var observer = new IntersectionObserver(function (entries) {
       entries.forEach(function (entry) {
         if (!entry.isIntersecting) return;
         entry.target.classList.add('is-visible');
-        revealObserver.unobserve(entry.target);
+        observer.unobserve(entry.target);
       });
     }, { threshold: 0.1, rootMargin: '0px 0px -6% 0px' });
 
-    revealTargets.forEach(function (el, i) {
+    targets.forEach(function (el, i) {
       el.classList.add('reveal');
       el.style.transitionDelay = ((i % 4) * 70) + 'ms';
-      revealObserver.observe(el);
+      observer.observe(el);
     });
-  }
+  });
 
-  /* ── Active nav link ────────────────────────────────────────────────── */
-  var navLinks = Array.prototype.slice.call(nav.querySelectorAll('a[href^="#"]'));
-  var sections = navLinks
-    .map(function (a) { return document.querySelector(a.getAttribute('href')); })
-    .filter(Boolean);
+  /* ── 11. 헤더 그림자 · 맨 위로 · 현재 섹션 ─────────────────────────── */
+  guard('스크롤 반응', function () {
+    var header = $('siteHeader');
+    var toTop = $('toTop');
+    var nav = $('nav');
+    var navLinks = nav ? Array.prototype.slice.call(nav.querySelectorAll('a[href^="#"]')) : [];
+    var sections = navLinks
+      .map(function (a) { return document.querySelector(a.getAttribute('href')); })
+      .filter(Boolean);
 
-  function syncActiveNav() {
-    var pos = window.scrollY + 130;
-    var current = null;
+    function syncActiveNav() {
+      if (!sections.length) return;
 
-    sections.forEach(function (section) {
-      if (section.offsetTop <= pos) current = section.id;
-    });
+      var pos = (window.scrollY || window.pageYOffset || 0) + 130;
+      var current = null;
 
-    navLinks.forEach(function (a) {
-      a.classList.toggle('is-active', a.getAttribute('href') === '#' + current);
-    });
-  }
+      sections.forEach(function (section) {
+        if (section.offsetTop <= pos) current = section.id;
+      });
 
-  /* ── Back to top ────────────────────────────────────────────────────── */
-  var toTop = document.getElementById('toTop');
+      navLinks.forEach(function (a) {
+        a.classList.toggle('is-active', a.getAttribute('href') === '#' + current);
+      });
+    }
 
-  if (toTop) {
-    toTop.addEventListener('click', function () {
+    on(toTop, 'click', function () {
       window.scrollTo({ top: 0, behavior: reduceMotion ? 'auto' : 'smooth' });
     });
-  }
 
-  /* ── Header shadow + back-to-top visibility on scroll ───────────────── */
-  var header = document.getElementById('siteHeader');
+    function onScroll() {
+      var y = window.scrollY || window.pageYOffset || 0;
 
-  function onScroll() {
-    var y = window.scrollY || window.pageYOffset;
-    header.classList.toggle('is-scrolled', y > 8);
-    if (toTop) toTop.hidden = y < 600;
-    syncActiveNav();
-  }
-  onScroll();
-  window.addEventListener('scroll', onScroll, { passive: true });
+      if (header) header.classList.toggle('is-scrolled', y > 8);
+      if (toTop) toTop.hidden = y < 600;
+      syncActiveNav();
+    }
 
-  /* ── Footer year ────────────────────────────────────────────────────── */
-  var yearEl = document.getElementById('year');
-  if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+    onScroll();
+    on(window, 'scroll', onScroll, { passive: true });
+  });
 
-  /* ── 다른 페이지 스크립트가 쓰는 최소한의 API ───────────────────────── */
-  window.MonsterLab = {
-    t: function (key, lang) {
-      var dict = I18N[lang || htmlEl.getAttribute('lang')] || I18N[DEFAULT_LANG];
-      return dict[key] != null ? dict[key] : key;
-    },
-    toast: showToast
-  };
+  /* ── 12. 푸터 연도 ─────────────────────────────────────────────────── */
+  guard('푸터 연도', function () {
+    var yearEl = $('year');
+    if (yearEl) yearEl.textContent = String(new Date().getFullYear());
+  });
 })();

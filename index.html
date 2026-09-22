@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="ko">
+<html lang="ko" data-title-key="page.title" data-desc-key="page.desc">
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -53,7 +53,7 @@
 }
 </script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230a0e13'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%236ee7a8' font-family='sans-serif' font-weight='bold'%3EM%3C/text%3E%3C/svg%3E" />
-<link rel="stylesheet" href="styles.css" />
+<link rel="stylesheet" href="styles.css?v=3" />
 </head>
 <body>
 
@@ -73,14 +73,20 @@
 
       <div class="nav-theme">
         <span class="nav-theme-label" data-i18n="footer.themeLabel">테마</span>
-        <div class="theme-set" role="group" data-theme-set data-i18n-aria-label="theme.group"></div>
+        <div class="theme-set" role="group" data-i18n-aria-label="theme.group">
+          <button class="theme-opt" type="button" data-theme-option="light" aria-pressed="false" aria-label="라이트 모드로 보기" title="라이트 모드로 보기"><span aria-hidden="true">☀️</span></button>
+          <button class="theme-opt" type="button" data-theme-option="dark" aria-pressed="false" aria-label="다크 모드로 보기" title="다크 모드로 보기"><span aria-hidden="true">🌙</span></button>
+          <button class="theme-opt" type="button" data-theme-option="system" aria-pressed="true" aria-label="시스템 설정 따르기" title="시스템 설정 따르기"><span aria-hidden="true">🖥️</span></button>
+        </div>
       </div>
     </nav>
 
     <div class="header-actions">
-      <!-- 테마 버튼 3개는 script.js가 채웁니다 ([data-theme-set]) -->
-      <div class="theme-set theme-set--bar" role="group" data-theme-set
-           data-i18n-aria-label="theme.group"></div>
+      <div class="theme-set theme-set--bar" role="group" data-i18n-aria-label="theme.group">
+        <button class="theme-opt" type="button" data-theme-option="light" aria-pressed="false" aria-label="라이트 모드로 보기" title="라이트 모드로 보기"><span aria-hidden="true">☀️</span></button>
+        <button class="theme-opt" type="button" data-theme-option="dark" aria-pressed="false" aria-label="다크 모드로 보기" title="다크 모드로 보기"><span aria-hidden="true">🌙</span></button>
+        <button class="theme-opt" type="button" data-theme-option="system" aria-pressed="true" aria-label="시스템 설정 따르기" title="시스템 설정 따르기"><span aria-hidden="true">🖥️</span></button>
+      </div>
       <button class="lang-btn" id="langBtn" type="button" aria-label="Switch language">
         <span class="lang-icon" aria-hidden="true">🌐</span>
         <span id="langLabel">EN</span>
@@ -448,6 +454,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="script.js"></script>
+<script src="script.js?v=3"></script>
 </body>
 </html>
