@@ -21,7 +21,8 @@ CNAME          # GitHub Pages 커스텀 도메인 (monsterlab.monster)
 
 - 프레임워크·패키지·빌드 과정 없음. 파일을 그대로 올리면 동작합니다.
 - 외부 의존성 없음(폰트는 시스템 폰트 사용, CDN 요청 없음).
-- 연락 폼은 별도 서버 없이 `mailto:`로 동작합니다. 백엔드가 필요하면 폼 `submit` 핸들러만 교체하면 됩니다.
+- 문의 폼은 **Formspree**로 전송합니다(서버 불필요). 폼 ID를 아직 넣지 않았으면 기존처럼 `mailto:`로 동작합니다.
+  백엔드를 직접 붙이려면 폼 `submit` 핸들러만 교체하면 됩니다.
 - `script.js`는 **공용 API를 먼저 노출한 뒤, 기능별로 `guard()` 안에서 초기화**합니다.
   한 기능이 예외로 죽어도 나머지(특히 언어 전환)는 계속 동작하고, 실패한 기능만 콘솔에 남습니다.
   (예전에는 모든 기능이 한 줄기라서 테마 초기화 하나가 죽으면 언어 버튼까지 함께 죽었습니다.)
@@ -47,7 +48,8 @@ node smoke-test.js
 
 브라우저 없이 페이지 스크립트를 **실제로 실행**해 보는 테스트입니다(의존성 없음, Node만 있으면 됩니다).
 `index.html`의 인라인 스크립트 → `script.js`를 최소 DOM 위에서 돌리고,
-언어 전환·테마 선택·강조색·문의 폼 검증까지 클릭을 흉내 내 확인합니다.
+언어 전환·테마 선택·강조색·문의 폼 검증에 더해 **Formspree 전송(성공·실패·429 한도)** 까지 흉내 내 확인합니다.
+(`fetch`도 가짜로 주입하므로 네트워크 요청은 나가지 않습니다.)
 
 특히 다음 두 가지를 지켜줍니다.
 
@@ -57,11 +59,11 @@ node smoke-test.js
 
 ## 캐시 무효화 (배포 후 "안 바뀐 것처럼 보이는" 문제)
 
-CSS·JS를 참조할 때 `?v=4` 같은 버전을 붙여 둡니다.
+CSS·JS를 참조할 때 `?v=5` 같은 버전을 붙여 둡니다.
 
 ```html
-<link rel="stylesheet" href="styles.css?v=3" />
-<script src="script.js?v=4"></script>
+<link rel="stylesheet" href="styles.css?v=5" />
+<script src="script.js?v=6"></script>
 ```
 
 **CSS나 JS를 고쳐서 배포할 때는 `index.html`의 해당 `?v=` 숫자를 올리세요.**
@@ -119,6 +121,63 @@ CSS·JS를 참조할 때 `?v=4` 같은 버전을 붙여 둡니다.
 - `index.html` — JSON-LD `Organization.email` (검색엔진용)
 
 주소를 바꿀 때는 위 세 곳을 모두 수정하세요.
+
+### 문의 폼 (Formspree)
+
+문의는 별도 서버 없이 [Formspree](https://formspree.io)로 전송됩니다.
+
+**현재 연결 상태:** monsterlab.monster → `https://formspree.io/f/mgavywgr`
+
+연결은 `index.html`의 `action` 한 줄이 전부입니다. **수신처를 바꾸려면 이 주소의 폼 ID만 바꾸면 됩니다.**
+
+```html
+<form class="contact-form" id="contactForm" method="POST"
+      action="https://formspree.io/f/mgavywgr" novalidate>
+```
+
+- 다른 사이트(toeic.monster 등)에 같은 폼을 쓸 때도 그 사이트의 `index.html` 에서 이 주소만 바꿉니다.
+  ID를 그대로 두면 공용으로 받고, 다른 폼 ID를 넣으면 사이트별로 따로 받습니다.
+- `REPLACE_ME` 처럼 **밑줄이 들어간 값**을 넣으면 미연결로 보고 예전처럼 메일 앱(`mailto:`)으로 보냅니다.
+  (연결 전에도 사이트가 깨지지 않게 하는 안전장치입니다. `node smoke-test.js` 가 배포 전에 이 상태를 잡아냅니다.)
+- 연결되면 버튼 문구가 `보내기`/`Send` 로, 안내 문구가 Formspree용으로 바뀌고,
+  전송은 페이지 이동 없이 AJAX(JSON)로 나갑니다.
+
+동작 방식(`script.js`의 `문의 폼` 블록):
+
+- `action` 이 미연결이거나 `fetch` 를 쓸 수 없는 브라우저면 **예전처럼 `mailto:`** 로 보냅니다.
+- 전송 형식은 **`FormData`(multipart/form-data)** 입니다. `Content-Type` 을 직접 지정하지 않아
+  CORS 사전 요청(preflight)이 없고, 브라우저가 폼을 직접 POST 할 때와 같은 형식입니다.
+- 보내는 값: `name` · `email`(회신 주소) · `message` · `_subject`(유형+이름) · `intent`(general/bug/partner) · `source`(접속 도메인).
+  reCAPTCHA를 켜면 `g-recaptcha-response` 가 더해집니다.
+- **스팸 방지 기본값**: 폼 안의 숨은 함정 칸(`name="_gotcha"`)은 화면 밖으로 밀어 두었습니다.
+  봇이 이 칸을 채우면 Formspree가 제출을 조용히 버립니다(사람에게는 보이지 않고 탭 순서에서도 빠집니다).
+- **reCAPTCHA v3 (선택)**: `<form data-recaptcha-key="">` 에 Google reCAPTCHA v3 **사이트 키**를 넣으면 켜집니다.
+  (Google 콘솔에서 만든 같은 키의 **비밀 키**를 Formspree 폼 설정의 reCAPTCHA에 넣어야 합니다.)
+  켠 경우에만 첫 전송 때 Google 스크립트를 한 번 불러오고, 토큰을 `g-recaptcha-response` 로 함께 보냅니다.
+  **비워 두면 외부 요청이 0** — 이 저장소의 “CDN 요청 없음” 원칙이 그대로 유지됩니다.
+  스크립트를 못 불러오면 토큰 없이 전송을 시도하고, 실패하면 기존 실패 안내가 뜨고 Gmail·본문 복사가 대안으로 남습니다.
+- 전송 중에는 버튼을 잠가 중복 전송을 막고(Formspree는 분당 20건 제한),
+  결과를 `#formStatus` 에 표시합니다. `429` 는 "잠시 후 다시 시도" 문구로 구분합니다.
+- 실패해도 `Gmail로 보내기` · `본문 복사` 버튼이 그대로 남아 있어 대안 경로가 있습니다.
+- Formspree가 안내하는 `@formspree/ajax` CDN 라이브러리는 쓰지 않습니다.
+  이 저장소는 외부 의존성 0(CDN 요청 없음)을 원칙으로 하고, 이미 사이트 자체 검증·한/영 문구와 얽혀 있어
+  Formspree의 AJAX 규칙(`Accept: application/json` · 필드/폼 오류 · 전송 중 잠금)을 `fetch` 로 직접 구현했습니다.
+
+### 폼 하나로 여러 도메인 쓰기 (toeic.monster · engmon.monster)
+
+**가능합니다.** Formspree의 폼 주소(`formspree.io/f/폼ID`)는 특정 도메인에 묶여 있지 않아서,
+여러 사이트의 `<form action>` 이 같은 폼 ID를 가리켜도 모두 같은 받은편지함으로 들어옵니다.
+
+- 어느 사이트에서 온 문의인지는 `source` 필드(접속 도메인)로 자동 구분됩니다.
+  받은 메일에서 `source: toeic.monster` 처럼 보입니다.
+- **무료 플랜에서도 폼·프로젝트가 무제한**이고 `Restrict to domain` 도 모든 플랜에서 쓸 수 있습니다.
+  도메인 개수 자체로 유료가 되지는 않습니다.
+- 다만 `Restrict to domain` 은 **프로젝트당 도메인 한 개**(서브도메인 포함)만 받습니다.
+  도메인마다 스팸 차단을 걸고 싶으면 **사이트별로 프로젝트(폼)를 따로 만들어** 각각 그 도메인을 넣으세요.
+  설정을 비워 두면 다른 도메인에서 온 제출이 차단되지는 않고 스팸함으로 분류됩니다.
+- 무료 플랜의 실제 한도는 **월 50건이 계정 전체 합산**이고, 연결 메일 주소 2개까지, 최근 30일 기록만 남습니다.
+  한 폼을 **여러 주소로 동시 수신(Multiple To Emails)** 하는 기능은 Personal($10/월, 연 결제 기준)부터입니다.
+- 정리하면: 도메인 2개 + 스팸 차단까지 = 폼 2개(무료, 월 50건 안에서) / 도메인 2개 + 폼 1개 = 도메인 제한 없이 사용(무료).
 
 ### 색상 / 테마
 
@@ -182,12 +241,14 @@ CSS·JS를 참조할 때 `?v=4` 같은 버전을 붙여 둡니다.
 - **히어로 미리보기**: `index.html`의 `.hero-preview` 블록. 실제 화면 캡처 이미지로 교체하려면
   `.preview-window` 안을 `<img src="preview.png" alt="..." />`로 바꾸면 됩니다.
 - **FAQ**: `<details class="faq">` 항목을 복사해 추가합니다. 첫 항목만 `open`이 붙어 있습니다.
-- **문의 폼**: 입력값을 검사한 뒤 `mailto:` 링크를 열어 메일 앱으로 전달합니다.
+- **문의 폼**: 입력값을 검사한 뒤 Formspree로 전송합니다(폼 ID 미설정 시 `mailto:` 로 폴백).
 
 ## 기능
 
 - 문의: 유형 탭(일반·버그·제휴)에 따라 제목 자동 생성, 필드별 오류 메시지, 글자 수 카운터,
-  보낼 내용 미리보기, 전송 3가지(메일 앱 / Gmail / 본문 복사)
+  보낼 내용 미리보기, **Formspree 전송**(FormData · 전송 중 잠금 · 성공/실패/한도 안내),
+  숨은 함정 칸(허니팟)과 선택적 reCAPTCHA v3,
+  전송이 안 될 때의 대안 3가지(메일 앱 / Gmail / 본문 복사)
 - 한/영 전환 토글 — 선택 언어는 `localStorage`에 저장
 - 모바일 햄버거 메뉴 (ESC로 닫기)
 - 스크롤 시 헤더 경계선 표시, 현재 보고 있는 섹션 메뉴 강조

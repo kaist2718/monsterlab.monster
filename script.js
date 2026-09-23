@@ -120,6 +120,12 @@
       'form.needEmail': '이메일 주소를 확인해 주세요.',
       'form.needMessage': '내용을 입력해 주세요.',
       'form.opened': '메일 앱을 여는 중입니다',
+      'form.send': '보내기',
+      'form.sending': '보내는 중…',
+      'form.sent': '문의를 보냈습니다. 영업일 기준 2~3일 안에 답장드립니다.',
+      'form.sendFail': '전송하지 못했습니다. 잠시 후 다시 시도하거나 Gmail·본문 복사를 이용해 주세요.',
+      'form.rateLimited': '요청이 너무 많습니다. 잠시 후 다시 시도해 주세요.',
+      'form.hintOnline': '전송은 Formspree로 바로 접수됩니다. 안 되면 Gmail로 보내기나 본문 복사를 쓰면 됩니다.',
 
       'top.back': '맨 위로',
       'theme.dark': '다크',
@@ -246,6 +252,12 @@
       'form.needEmail': 'Please check your email address.',
       'form.needMessage': 'Please enter a message.',
       'form.opened': 'Opening your mail app',
+      'form.send': 'Send',
+      'form.sending': 'Sending…',
+      'form.sent': 'Your message was sent — we usually reply within two to three business days.',
+      'form.sendFail': 'Could not send. Please try again shortly, or use Gmail / copy the message.',
+      'form.rateLimited': 'Too many requests. Please wait a moment and try again.',
+      'form.hintOnline': 'Messages are delivered through Formspree. If that fails, use Gmail or copy the message.',
 
       'top.back': 'Back to top',
       'theme.dark': 'Dark',
@@ -605,9 +617,37 @@
     var intentTabs = $$('.intent-tab');
     var gmailBtn = $('sendGmailBtn');
     var copyBodyBtn = $('copyBodyBtn');
+    var submitBtn = $('sendBtn');
+    var statusEl = $('formStatus');
+    var hintEl = $('formHint');
     var activeIntent = 'general';
+    var sending = false;
+    var statusKey = '';
+    var statusIsError = false;
 
     if (!nameEl || !emailEl || !msgEl) return;
+
+    /* Formspree 연결 지점.
+       폼 ID는 index.html의 <form action="https://formspree.io/f/폼ID"> 에 있습니다.
+       대시보드에서 받은 ID를 넣으면 이 스크립트가 그 주소로 바로 전송하고,
+       아직 넣지 않았다면(REPLACE_ME) 예전처럼 메일 앱으로 보냅니다. */
+    var FORMSPREE_PLACEHOLDER = 'REPLACE_ME';
+    var endpoint = formspreeEndpoint();
+    var canPost = !!(endpoint && typeof window.fetch === 'function');
+
+    /* google reCAPTCHA v3 — index.html의 <form data-recaptcha-key="..."> 에 사이트 키를
+       넣으면 켜집니다(Formspree 쪽에는 비밀 키를 넣고 reCAPTCHA를 켜두어야 합니다).
+       비워 두면 Google 스크립트를 아예 불러오지 않아 외부 요청이 0입니다. */
+    var recaptchaKey = (form.getAttribute('data-recaptcha-key') || '').trim();
+    var recaptchaReady = false;
+    var recaptchaLoading = false;
+    var recaptchaQueue = [];
+
+    function formspreeEndpoint() {
+      var action = (form.getAttribute('action') || '').trim();
+      var match = /^https:\/\/formspree\.io\/f\/([A-Za-z0-9]+)$/.exec(action);
+      return match && match[1] !== FORMSPREE_PLACEHOLDER ? action : '';
+    }
 
     msgEl.setAttribute('maxlength', String(MAX_MESSAGE));
 
@@ -661,6 +701,123 @@
       return ok;
     }
 
+    /* 전송 결과 안내. 문구 키를 기억해 두었다가 언어를 바꿔도 다시 그립니다. */
+    function setStatus(key, isError) {
+      statusKey = key || '';
+      statusIsError = !!isError;
+      renderStatus();
+    }
+
+    function renderStatus() {
+      if (!statusEl) return;
+
+      var message = statusKey ? currentDict()[statusKey] : '';
+      statusEl.textContent = message;
+      statusEl.hidden = !message;
+      statusEl.classList.toggle('is-error', !!(message && statusIsError));
+    }
+
+    /* 전송 중에는 버튼을 잠가 중복 전송(Formspree는 분당 20건 제한)을 막습니다. */
+    function setSending(busy) {
+      sending = busy;
+      if (!submitBtn) return;
+
+      submitBtn.disabled = busy;
+      submitBtn.setAttribute('aria-busy', String(busy));
+      submitBtn.textContent = currentDict()[busy ? 'form.sending' : 'form.send'];
+    }
+
+    /* reCAPTCHA 스크립트를 한 번만 불러오고, 그동안 들어온 요청은 모아서 함께 처리합니다. */
+    function ensureRecaptcha(callback) {
+      if (recaptchaReady) return callback(true);
+
+      recaptchaQueue.push(callback);
+      if (recaptchaLoading) return;
+      recaptchaLoading = true;
+
+      var head = document.head || document.body;
+      var script = document.createElement('script');
+      script.src = 'https://www.google.com/recaptcha/api.js?render=' + encodeURIComponent(recaptchaKey);
+      script.async = true;
+      script.onload = function () { flush(true); };
+      script.onerror = function () { flush(false); };
+      head.appendChild(script);
+
+      function flush(ok) {
+        recaptchaReady = ok;
+
+        var queue = recaptchaQueue;
+        recaptchaQueue = [];
+        queue.forEach(function (fn) { fn(ok); });
+      }
+    }
+
+    /* 토큰을 못 받아도 전송은 그대로 시도합니다(Formspree가 최종 판단 —
+       실패하면 기존 실패 안내가 뜨고 Gmail·본문 복사가 대안으로 남습니다). */
+    function withRecaptchaToken(callback) {
+      if (!recaptchaKey) return callback('');
+
+      ensureRecaptcha(function (ok) {
+        if (!ok || !window.grecaptcha) return callback('');
+
+        window.grecaptcha.ready(function () {
+          window.grecaptcha.execute(recaptchaKey, { action: 'submit' }).then(
+            function (token) { callback(token || ''); },
+            function () { callback(''); }
+          );
+        });
+      });
+    }
+
+    /* Formspree로 AJAX 전송 (Accept: application/json → 페이지 이동 없이 결과 수신).
+       body 는 FormData(multipart/form-data) 라 CORS 사전 요청(preflight)이 없습니다 —
+       폼을 그대로 POST 할 때와 같은 형식입니다.
+       source 필드에 접속한 도메인이 담기므로, 여러 사이트가 같은 폼 ID를 써도
+       어느 사이트에서 온 문의인지 구분됩니다. */
+    function sendToFormspree(mail) {
+      setStatus('');
+      setSending(true);
+
+      withRecaptchaToken(function (token) {
+        var data = new FormData(form);
+
+        data.set('_subject', mail.subject);
+        data.set('intent', activeIntent);
+        data.set('source', (window.location && window.location.hostname) || 'monsterlab.monster');
+        if (token) data.set('g-recaptcha-response', token);
+
+        window.fetch(endpoint, {
+          method: 'POST',
+          headers: { 'Accept': 'application/json' },
+          body: data
+        }).then(sent, failed);
+      });
+
+      function sent(res) {
+        if (res.ok) return finishSent();
+
+        /* 429 = 분당/월간 전송 한도 초과 (Formspree 문서 기준) */
+        setSending(false);
+        setStatus(res.status === 429 ? 'form.rateLimited' : 'form.sendFail', true);
+      }
+
+      function failed() {
+        setSending(false);
+        setStatus('form.sendFail', true);
+      }
+
+      function finishSent() {
+        setSending(false);
+        form.reset();
+        updateCount();
+        syncPreview();
+        setStatus('form.sent');
+        showToast(currentDict()['form.sent']);
+      }
+    }
+
+    document.addEventListener('langchange', renderStatus);
+
     function syncPreview() {
       if (!preview) return;
 
@@ -696,17 +853,24 @@
       });
     });
 
-    /* 1) 기본 메일 앱 */
+    /* 1) 기본 전송 — Formspree(연결됨) 또는 메일 앱 */
     on(form, 'submit', function (e) {
       e.preventDefault();
-      if (!validate()) return;
+      if (sending || !validate()) return;
 
       var mail = composedMail();
-      window.location.href = 'mailto:' + EMAIL +
-        '?subject=' + encodeURIComponent(mail.subject) +
-        '&body=' + encodeURIComponent(mail.body);
 
-      showToast(currentDict()['form.opened']);
+      /* 폼 ID를 아직 넣지 않았거나 fetch를 쓸 수 없는 환경 */
+      if (!canPost) {
+        window.location.href = 'mailto:' + EMAIL +
+          '?subject=' + encodeURIComponent(mail.subject) +
+          '&body=' + encodeURIComponent(mail.body);
+
+        showToast(currentDict()['form.opened']);
+        return;
+      }
+
+      sendToFormspree(mail);
     });
 
     /* 2) Gmail 새 창 (메일 앱이 없는 환경) */
@@ -733,6 +897,19 @@
     });
 
     updateCount();
+
+    /* Formspree로 바로 보내는 상태면 버튼 이름과 안내 문구를 바꿉니다.
+       data-i18n 속성을 함께 바꾸므로 언어를 전환해도 새 문구가 유지됩니다. */
+    if (canPost) {
+      if (submitBtn) {
+        submitBtn.setAttribute('data-i18n', 'form.send');
+        submitBtn.textContent = currentDict()['form.send'];
+      }
+      if (hintEl) {
+        hintEl.setAttribute('data-i18n', 'form.hintOnline');
+        hintEl.textContent = currentDict()['form.hintOnline'];
+      }
+    }
   });
 
   /* ── 10. 스크롤 등장 ───────────────────────────────────────────────── */

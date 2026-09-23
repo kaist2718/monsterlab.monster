@@ -14,7 +14,7 @@
      1. head의 인라인 스크립트 → script.js 순서로 오류 없이 실행되는가
      2. 언어 전환이 실제로 문구·탭 제목을 바꾸는가 (ko/en 사전에 빈틈은 없는가)
      3. 테마 버튼/강조색 스와치가 선택 상태를 정확히 반영하는가
-     4. 문의 폼 검증과 메일 생성이 동작하는가
+     4. 문의 폼 검증과 Formspree 전송(성공·실패·한도, FormData, reCAPTCHA)이 동작하는가
      6. 한 기능이 실패해도 나머지(특히 언어 전환)는 살아남는가  ← 핵심 회귀 테스트
      7. HTML에 중복 id가 없고, 에셋 URL에 캐시 무효화 버전이 붙어 있는가
    ========================================================================== */
@@ -113,6 +113,7 @@ function makeElement(tag) {
   el.focus = () => {};
   el.select = () => {};
   el.getBoundingClientRect = () => ({ top: 0, left: 0, right: 0, bottom: 0, width: 0, height: 0 });
+  el.reset = () => {};
 
   Object.defineProperty(el, 'firstChild', { get: () => el.children[0] || null });
   Object.defineProperty(el, 'offsetHeight', { get: () => 1200 });
@@ -182,6 +183,50 @@ function makeDom(html, options) {
   bySelector['meta[name="theme-color"]'] = [makeMeta('theme-color', '#0a0e13')];
   bySelector['meta[name="description"]'] = [makeMeta('description', '')];
 
+  /* id가 붙은 실제 태그의 속성을 그 요소로 옮깁니다 (action, data-i18n, placeholder ...).
+     script.js는 이런 속성을 읽어 동작을 정하므로(예: <form action>으로 Formspree 연결 판단),
+     옮기지 않으면 화면과 다른 상태를 테스트하게 됩니다. */
+  [...html.matchAll(/<([a-z][\w-]*)([^>]*)>/gi)].forEach((m) => {
+    const idMatch = /\sid="([^"]+)"/.exec(m[2]);
+    if (!idMatch) return;
+
+    const el = byId.get(idMatch[1]);
+    if (!el) return;
+
+    [...m[2].matchAll(/([a-z][\w-]*)\s*=\s*"([^"]*)"/gi)].forEach((a) => {
+      if (a[1] !== 'id') el.setAttribute(a[1], a[2]);
+    });
+  });
+
+  const formEl = byId.get('contactForm');
+  if (formEl) {
+    if (opts.formspreeAction) formEl.setAttribute('action', opts.formspreeAction);
+    if (opts.recaptchaKey) formEl.setAttribute('data-recaptcha-key', opts.recaptchaKey);
+
+    /* 실제 폼처럼 submit 후 입력값이 비워지는지 볼 수 있게 */
+    formEl.reset = () => {
+      ['cfName', 'cfEmail', 'cfMsg'].forEach((id) => {
+        const field = byId.get(id);
+        if (field) field.value = '';
+      });
+    };
+
+    /* FormData 최소 구현이 읽어 갈 “폼 안 입력값” — 태그의 name/value 와
+       테스트가 넣은 값을 합쳐 돌려줍니다(전송 내용을 검사할 수 있게). */
+    formEl.__fields = () => [...html.matchAll(/<(?:input|select|textarea)\b[^>]*>/gi)]
+      .map((m) => {
+        const name = (m[0].match(/\bname="([^"]+)"/) || [])[1];
+        if (!name) return null;
+
+        const id = (m[0].match(/\bid="([^"]+)"/) || [])[1];
+        const el = id ? byId.get(id) : null;
+        const attrValue = (m[0].match(/\bvalue="([^"]*)"/) || [])[1];
+
+        return { name, value: (el && el.value) || attrValue || '' };
+      })
+      .filter(Boolean);
+  }
+
   /* <html> 태그의 속성( lang, data-title-key ... )도 그대로 옮깁니다 */
   const documentElement = makeElement('html');
   const htmlTag = html.match(/<html([^>]*)>/);
@@ -194,9 +239,28 @@ function makeDom(html, options) {
   const body = makeElement('body');
   const documentListeners = {};
 
+  /* <head> — script 주입(reCAPTCHA)을 추적합니다. 가짜 네트워크라 append 하면
+     바로 로드된 것으로 처리하고(opts.recaptchaLoad === false 면 실패로),
+     테스트는 head.children 으로 “외부 요청이 있었는지”를 볼 수 있습니다. */
+  const head = makeElement('head');
+  head.appendChild = (child) => {
+    head.children.push(child);
+    child.parentNode = head;
+
+    if (child.tagName === 'SCRIPT') {
+      if (opts.recaptchaLoad === false) {
+        if (typeof child.onerror === 'function') child.onerror();
+      } else if (typeof child.onload === 'function') {
+        child.onload();
+      }
+    }
+    return child;
+  };
+
   const document = {
     documentElement,
     body,
+    head,
     title: '',
     readyState: 'complete',
     getElementById: (id) => byId.get(id) || null,
@@ -227,9 +291,30 @@ function makeDom(html, options) {
   return { document, byId, bySelector, documentElement, duplicateIds };
 }
 
+/* script.js 는 fetch(...).then(성공).then(성공, 실패) 형태만 씁니다.
+   테스트를 동기로 유지하려고, 그 체인만 그대로 흉내 내는 최소 thenable을 씁니다
+   (진짜 Promise는 마이크로태스크라서 check() 안에서 결과를 바로 볼 수 없습니다). */
+function makeThenable(settle) {
+  let value;
+  let error;
+  try { value = settle(); } catch (err) { error = err; }
+
+  return {
+    then(onOk, onErr) {
+      if (error) {
+        if (!onErr) return makeThenable(() => { throw error; });
+        return makeThenable(() => onErr(error));
+      }
+      if (!onOk) return makeThenable(() => value);
+      return makeThenable(() => onOk(value));
+    },
+  };
+}
+
 function makeSandbox(dom, opts) {
   const store = new Map(Object.entries((opts && opts.storage) || {}));
   const windowListeners = {};
+  const fetchCalls = [];
 
   const sandbox = {
     console: opts.silentConsole
@@ -287,6 +372,54 @@ function makeSandbox(dom, opts) {
   sandbox.removeEventListener = () => {};
   sandbox.speechSynthesis = { cancel() {}, speak() {} };
 
+  /* FormData 최소 구현 — 폼 입력값을 읽고, set() 으로 덧붙인 값(토큰·제목 등)을
+     담습니다. 테스트는 body.get('필드명') 으로 전송 내용을 확인합니다. */
+  sandbox.FormData = class FormData {
+    constructor(form) {
+      this._entries = [];
+
+      const fields = (form && typeof form.__fields === 'function') ? form.__fields() : [];
+      fields.forEach((f) => this.set(f.name, f.value));
+    }
+
+    set(name, value) {
+      const pair = [String(name), String(value)];
+      const i = this._entries.findIndex((e) => e[0] === pair[0]);
+
+      if (i > -1) this._entries[i] = pair; else this._entries.push(pair);
+      return this;
+    }
+
+    get(name) {
+      const hit = this._entries.filter((e) => e[0] === String(name))[0];
+      return hit ? hit[1] : null;
+    }
+
+    has(name) { return this._entries.some((e) => e[0] === String(name)); }
+  };
+
+  /* reCAPTCHA v3 — opts.recaptchaKey 를 주면 스크립트가 로드된 상태를 흑내 냅니다. */
+  if (opts && opts.recaptchaKey) {
+    sandbox.grecaptcha = {
+      ready: (cb) => cb(),
+      execute: () => {
+        if (opts.recaptchaTokenFails) return makeThenable(() => { throw new Error('recaptcha'); });
+        return makeThenable(() => 'test-token');
+      },
+    };
+  }
+
+  /* Formspree 전송 테스트용 가짜 fetch. opts.fetchResponse 로 응답을 바꿉니다. */
+  sandbox.fetch = (url, options) => {
+    fetchCalls.push({ url, options });
+    const res = (opts && opts.fetchResponse) || { ok: true, status: 200 };
+    return makeThenable(() => {
+      if (res instanceof Error) throw res;
+      return res;
+    });
+  };
+  sandbox._fetchCalls = fetchCalls;
+
   return sandbox;
 }
 
@@ -311,6 +444,19 @@ function runPage(file, options) {
   return { sandbox, dom, html };
 }
 
+/* 문의 폼을 값으로 채우고 제출합니다 (Formspree 전송 테스트용) */
+function submitForm(page, values) {
+  const byId = page.dom.byId;
+  byId.get('cfName').value = values.name;
+  byId.get('cfEmail').value = values.email;
+  byId.get('cfMsg').value = values.message;
+
+  const form = byId.get('contactForm');
+  form.dispatch('submit', { preventDefault() {}, target: form });
+  return form;
+}
+
+const FORMSPREE_URL = 'https://formspree.io/f/xyzabcd12';
 const PAGES = ['index.html'];
 const loaded = {};
 
@@ -460,20 +606,157 @@ if (index) {
     return '빈 제출 시 3개 필드 오류';
   });
 
-  check('값을 채우면 검증을 통과하고 mailto 링크를 만든다', () => {
-    dom.byId.get('cfName').value = '김테스트';
-    dom.byId.get('cfEmail').value = 'a@b.com';
-    dom.byId.get('cfMsg').value = '안녕하세요';
+  /* index.html은 실제 폼 ID로 연결되어 있으므로,
+     "아직 연결하지 않았을 때"의 동작은 자리표시자로 따로 확인합니다. */
+  const fallbackPage = () =>
+    runPage('index.html', { formspreeAction: 'https://formspree.io/f/REPLACE_ME' });
 
-    const form = dom.byId.get('contactForm');
-    form.dispatch('submit', { preventDefault() {}, target: form });
+  check('폼 ID가 없으면 검증 통과 후 mailto 링크를 만든다', () => {
+    const page = fallbackPage();
+    submitForm(page, { name: '김테스트', email: 'a@b.com', message: '안녕하세요' });
 
     const still = ['cfNameErr', 'cfEmailErr', 'cfMsgErr']
-      .filter((id) => dom.byId.get(id) && dom.byId.get(id).hidden === false);
+      .filter((id) => page.dom.byId.get(id) && page.dom.byId.get(id).hidden === false);
     assert(still.length === 0, '통과했는데 오류가 남아 있습니다: ' + still.join(','));
-    assert(sandbox.location.href.indexOf('mailto:kaist2718@gmail.com') === 0,
-      'mailto 주소가 아닙니다: ' + sandbox.location.href);
-    return 'mailto:kaist2718@gmail.com 생성';
+    assert(page.sandbox.location.href.indexOf('mailto:kaist2718@gmail.com') === 0,
+      'mailto 주소가 아닙니다: ' + page.sandbox.location.href);
+    assert(page.sandbox._fetchCalls.length === 0,
+      'Formspree ID를 넣지 않았는데 fetch가 호출되었습니다');
+    return 'mailto:kaist2718@gmail.com 생성 (Formspree 미연결)';
+  });
+
+  /* ── Formspree 연결 (action에 폼 ID가 있는 경우) ─────────────────────── */
+  check('폼 ID가 있으면 FormData(multipart)로 전송한다', () => {
+    const page = runPage('index.html', { formspreeAction: FORMSPREE_URL });
+    submitForm(page, { name: '김테스트', email: 'a@b.com', message: '안녕하세요' });
+
+    const calls = page.sandbox._fetchCalls;
+    assert(calls.length === 1, 'fetch 호출 ' + calls.length + '회 (1회여야 함)');
+    assert(calls[0].url === FORMSPREE_URL, '전송 주소 = ' + calls[0].url);
+    assert(calls[0].options.method === 'POST', 'method = ' + calls[0].options.method);
+    assert(calls[0].options.headers.Accept === 'application/json', 'Accept 헤더가 없습니다');
+    assert(calls[0].options.headers['Content-Type'] === undefined,
+      'Content-Type을 직접 지정하면 CORS 사전 요청(preflight)이 생깁니다');
+
+    const body = calls[0].options.body;
+    assert(body && typeof body.get === 'function', '본문이 FormData가 아닙니다');
+    assert(body.get('name') === '김테스트' && body.get('email') === 'a@b.com',
+      '이름·이메일이 전달되지 않았습니다');
+    assert(body.get('message') === '안녕하세요', '내용이 전달되지 않았습니다');
+    assert(body.get('_subject').indexOf('MonsterLab') === 0, '_subject = ' + body.get('_subject'));
+    assert(body.get('intent') === 'general', 'intent = ' + body.get('intent'));
+    assert(body.get('source') === 'monsterlab.monster', 'source = ' + body.get('source'));
+
+    /* 함정 칸은 비어 있고, reCAPTCHA 키가 없으면 토큰도 붙지 않아야 합니다 */
+    assert(body.get('_gotcha') === '', '허니팟 칸이 비어 있지 않습니다');
+    assert(body.get('g-recaptcha-response') === null, '키가 없는데 reCAPTCHA 토큰이 붙었습니다');
+    return 'POST FormData · _subject·intent·source 확인';
+  });
+
+  check('reCAPTCHA 키가 없으면 Google 스크립트를 부르지 않는다', () => {
+    const page = runPage('index.html', { formspreeAction: FORMSPREE_URL });
+    submitForm(page, { name: '김', email: 'a@b.com', message: '안녕' });
+
+    assert(page.dom.document.head.children.length === 0,
+      '외부 스크립트를 불러왔습니다: ' + page.dom.document.head.children.length + '개');
+    return '외부 요청 0 (사이트 키 비움)';
+  });
+
+  check('reCAPTCHA 키가 있으면 토큰을 붙이고 스크립트는 한 번만 부른다', () => {
+    const page = runPage('index.html', {
+      formspreeAction: FORMSPREE_URL,
+      recaptchaKey: 'test-site-key',
+    });
+    submitForm(page, { name: '김', email: 'a@b.com', message: '안녕' });
+
+    const head = page.dom.document.head;
+    assert(head.children.length === 1, '스크립트 ' + head.children.length + '개 (1개여야 함)');
+    assert(String(head.children[0].src).indexOf('test-site-key') > -1,
+      '사이트 키가 주소에 없습니다: ' + head.children[0].src);
+    assert(String(head.children[0].src).indexOf('google.com/recaptcha') > -1,
+      'Google reCAPTCHA 주소가 아닙니다: ' + head.children[0].src);
+    assert(page.sandbox._fetchCalls[0].options.body.get('g-recaptcha-response') === 'test-token',
+      '토큰이 전달되지 않았습니다');
+
+    /* 두 번째 전송은 스크립트를 다시 불러오지 않아야 합니다 */
+    submitForm(page, { name: '김', email: 'a@b.com', message: '두 번째' });
+
+    assert(head.children.length === 1, '스크립트를 다시 불러왔습니다 (' + head.children.length + '개)');
+    assert(page.sandbox._fetchCalls.length === 2, '두 번째 전송이 없습니다');
+    return 'script 1회 · 토큰 전달';
+  });
+
+  check('reCAPTCHA 스크립트를 못 불러와도 전송은 시도한다', () => {
+    const page = runPage('index.html', {
+      formspreeAction: FORMSPREE_URL,
+      recaptchaKey: 'test-site-key',
+      recaptchaLoad: false,
+    });
+    submitForm(page, { name: '김', email: 'a@b.com', message: '안녕' });
+
+    const calls = page.sandbox._fetchCalls;
+    assert(calls.length === 1, 'fetch 호출 ' + calls.length + '회 (전송이 막혔습니다)');
+    assert(calls[0].options.body.get('g-recaptcha-response') === null, '토큰이 붙었습니다');
+    return '로드 실패 → 토큰 없이 전송 시도';
+  });
+
+  check('전송 성공 시 상태 안내가 뜨고 입력값이 비워진다', () => {
+    const page = runPage('index.html', { formspreeAction: FORMSPREE_URL });
+    submitForm(page, { name: '김테스트', email: 'a@b.com', message: '안녕하세요' });
+
+    const status = page.dom.byId.get('formStatus');
+    const t = page.sandbox.MonsterLab.t;
+    assert(status, '#formStatus가 없습니다');
+    assert(status.hidden === false, '성공 안내가 숨겨져 있습니다');
+    assert(status.textContent === t('form.sent', 'ko'), '문구 = ' + status.textContent);
+    assert(status.classList.contains('is-error') === false, '성공인데 오류 색으로 표시됩니다');
+    assert(page.dom.byId.get('cfMsg').value === '', '전송 후에도 입력값이 남아 있습니다');
+
+    const btn = page.dom.byId.get('sendBtn');
+    assert(btn.disabled === false, '전송 후에도 버튼이 잠겨 있습니다');
+    assert(btn.textContent === t('form.send', 'ko'), '버튼 문구 = ' + btn.textContent);
+
+    /* 버튼·안내 문구가 Formspree용으로 바뀌어 있어야 합니다 */
+    assert(btn.getAttribute('data-i18n') === 'form.send', '버튼 data-i18n이 그대로입니다');
+    assert(page.dom.byId.get('formHint').getAttribute('data-i18n') === 'form.hintOnline',
+      '안내 문구가 Formspree용으로 바뀌지 않았습니다');
+    return '성공 안내 + 입력값 초기화 + 버튼 복구';
+  });
+
+  check('전송 실패와 한도 초과를 각각 다른 문구로 알린다', () => {
+    const fail = runPage('index.html', {
+      formspreeAction: FORMSPREE_URL,
+      fetchResponse: { ok: false, status: 500 },
+    });
+    submitForm(fail, { name: '김', email: 'a@b.com', message: '안녕' });
+
+    const failStatus = fail.dom.byId.get('formStatus');
+    assert(failStatus.hidden === false && failStatus.classList.contains('is-error'),
+      '실패 안내가 오류 상태로 표시되지 않았습니다');
+    assert(failStatus.textContent === fail.sandbox.MonsterLab.t('form.sendFail', 'ko'),
+      '문구 = ' + failStatus.textContent);
+    assert(fail.dom.byId.get('sendBtn').disabled === false, '실패 후 버튼이 잠겨 있습니다');
+
+    const rate = runPage('index.html', {
+      formspreeAction: FORMSPREE_URL,
+      fetchResponse: { ok: false, status: 429 },
+    });
+    submitForm(rate, { name: '김', email: 'a@b.com', message: '안녕' });
+    assert(rate.dom.byId.get('formStatus').textContent === rate.sandbox.MonsterLab.t('form.rateLimited', 'ko'),
+      '429 문구 = ' + rate.dom.byId.get('formStatus').textContent);
+    return '500 → 실패 안내 / 429 → 한도 안내';
+  });
+
+  check('폼 ID를 아직 넣지 않았으면(REPLACE_ME) Formspree를 쓰지 않는다', () => {
+    const page = fallbackPage();
+    submitForm(page, { name: '김', email: 'a@b.com', message: '안녕' });
+
+    assert(page.sandbox._fetchCalls.length === 0, 'REPLACE_ME 상태인데 fetch가 호출되었습니다');
+    assert(page.sandbox.location.href.indexOf('mailto:') === 0,
+      'mailto로 가지 않았습니다: ' + page.sandbox.location.href);
+    assert(page.dom.byId.get('sendBtn').getAttribute('data-i18n') === 'form.sendMailApp',
+      '버튼 문구가 Formspree용으로 바뀌었습니다');
+    return 'REPLACE_ME → 기존 메일 앱 동작 유지';
   });
 
   check('저장된 설정이 있으면 그대로 복원된다', () => {
@@ -522,7 +805,8 @@ check('요소 하나가 없어도 나머지 기능이 동작한다', () => {
 
 check('필수 요소(#langBtn·#langLabel·#toast)가 HTML에 있다', () => {
   const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
-  ['langBtn', 'langLabel', 'toast', 'contactForm', 'siteHeader', 'nav', 'menuBtn'].forEach((id) => {
+  ['langBtn', 'langLabel', 'toast', 'contactForm', 'sendBtn', 'formStatus', 'formHint',
+    'siteHeader', 'nav', 'menuBtn'].forEach((id) => {
     assert(html.indexOf('id="' + id + '"') !== -1, '# ' + id + ' 가 index.html에 없습니다');
   });
   return 'index.html 필수 요소 확인';
@@ -629,6 +913,18 @@ check('공유 에셋(styles.css / script.js) 버전 표기가 일관된다', () 
   const shared = ['styles.css', 'script.js'].filter((name) => versions[name]);
   assert(shared.length === 2, 'styles.css / script.js 버전 표기를 찾지 못했습니다');
   return Object.entries(versions).map(([n, s]) => n + '=' + [...s][0]).join(' ');
+});
+
+/* ── 6-1. 배포 설정 ───────────────────────────────────────────────────── */
+check('문의 폼이 실제 Formspree 폼 ID로 연결되어 있다', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const match = /<form[^>]*action="https:\/\/formspree\.io\/f\/([^"]+)"/.exec(html);
+
+  assert(match, '폼 action에서 Formspree 주소를 찾지 못했습니다');
+  assert(!/_/.test(match[1]),
+    '폼 ID가 자리표시자(' + match[1] + ')라 문의가 메일 앱으로만 갑니다 — 대시보드 폼 ID로 바꾸세요');
+  assert(match[1].length >= 6, '폼 ID가 너무 짧습니다: ' + match[1]);
+  return 'formspree.io/f/' + match[1];
 });
 
 /* ── 7. 데이터 구조 ───────────────────────────────────────────────────── */
