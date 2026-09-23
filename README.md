@@ -145,10 +145,17 @@ CSS·JS를 참조할 때 `?v=5` 같은 버전을 붙여 둡니다.
 동작 방식(`script.js`의 `문의 폼` 블록):
 
 - `action` 이 미연결이거나 `fetch` 를 쓸 수 없는 브라우저면 **예전처럼 `mailto:`** 로 보냅니다.
-- 전송 형식은 **`FormData`(multipart/form-data)** 입니다. `Content-Type` 을 직접 지정하지 않아
-  CORS 사전 요청(preflight)이 없고, 브라우저가 폼을 직접 POST 할 때와 같은 형식입니다.
+- 전송 형식은 **`x-www-form-urlencoded` + `charset=UTF-8`** 입니다. 폼 값을 `URLSearchParams` 로
+  UTF-8 퍼센트 인코딩해 보내고 `Content-Type` 에 문자셋을 적습니다.
+  (예전에는 `FormData`(multipart)를 썼는데, multipart 본문에는 "이 본문은 UTF-8" 이라는 표시가
+  없어 수신 쪽이 EUC-KR/CP949 로 해석하면 한글 문의가 깨져 도착했습니다.
+  `x-www-form-urlencoded` 는 CORS 안전 헤더라 사전 요청(preflight)도 생기지 않습니다.
+  스크립트 없이 전송되는 경우를 위해 `<form>` 에 `accept-charset="UTF-8"` 도 함께 적어 두었습니다.)
 - 보내는 값: `name` · `email`(회신 주소) · `message` · `_subject`(유형+이름) · `intent`(general/bug/partner) · `source`(접속 도메인).
   reCAPTCHA를 켜면 `g-recaptcha-response` 가 더해집니다.
+- **한글이 깨져 도착할 때**: 이 폼은 항상 UTF-8 로 보냅니다. 그런데 PowerShell·cmd 터미널에서
+  `curl`·스크립트로 시험 전송하면 Windows 콘솔 문자셋(CP949)으로 인코딩되어 메일이 깨져
+  도착합니다(이모지는 `?` 로 바뀝니다). 확인은 브라우저에서 폼에 직접 입력해 보내세요.
 - **스팸 방지 기본값**: 폼 안의 숨은 함정 칸(`name="_gotcha"`)은 화면 밖으로 밀어 두었습니다.
   봇이 이 칸을 채우면 Formspree가 제출을 조용히 버립니다(사람에게는 보이지 않고 탭 순서에서도 빠집니다).
 - **reCAPTCHA v3 (선택)**: `<form data-recaptcha-key="">` 에 Google reCAPTCHA v3 **사이트 키**를 넣으면 켜집니다.
@@ -246,7 +253,7 @@ CSS·JS를 참조할 때 `?v=5` 같은 버전을 붙여 둡니다.
 ## 기능
 
 - 문의: 유형 탭(일반·버그·제휴)에 따라 제목 자동 생성, 필드별 오류 메시지, 글자 수 카운터,
-  보낼 내용 미리보기, **Formspree 전송**(FormData · 전송 중 잠금 · 성공/실패/한도 안내),
+  보낼 내용 미리보기, **Formspree 전송**(UTF-8 본문 · 전송 중 잠금 · 성공/실패/한도 안내),
   숨은 함정 칸(허니팟)과 선택적 reCAPTCHA v3,
   전송이 안 될 때의 대안 3가지(메일 앱 / Gmail / 본문 복사)
 - 한/영 전환 토글 — 선택 언어는 `localStorage`에 저장

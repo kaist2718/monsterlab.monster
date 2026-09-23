@@ -633,7 +633,10 @@
        아직 넣지 않았다면(REPLACE_ME) 예전처럼 메일 앱으로 보냅니다. */
     var FORMSPREE_PLACEHOLDER = 'REPLACE_ME';
     var endpoint = formspreeEndpoint();
-    var canPost = !!(endpoint && typeof window.fetch === 'function');
+    /* 본문을 UTF-8 로 직접 만들려면 URLSearchParams 가 필요합니다.
+       없으면(아주 오래된 브라우저) 예전처럼 메일 앱으로 보냅니다. */
+    var canPost = !!(endpoint && typeof window.fetch === 'function' &&
+      typeof window.URLSearchParams === 'function');
 
     /* google reCAPTCHA v3 — index.html의 <form data-recaptcha-key="..."> 에 사이트 키를
        넣으면 켜집니다(Formspree 쪽에는 비밀 키를 넣고 reCAPTCHA를 켜두어야 합니다).
@@ -769,9 +772,30 @@
       });
     }
 
+    /* 폼 값을 UTF-8 퍼센트 인코딩 문자열로 만듭니다.
+       values 는 폼 입력값에 덧붙일 값(_subject·intent·source·토큰)입니다.
+
+       왜 FormData(multipart) 대신 직접 만드나:
+         multipart 는 값 자체는 UTF-8 로 나가지만 "이 본문은 UTF-8" 이라는 표시가
+         본문에 없습니다. 그래서 수신 쪽이 다른 문자셋으로 해석하면 한글 문의가
+         깨져 도착합니다(실제로 EUC-KR/CP949 로 해석된 깨진 메일을 받은 적이 있습니다).
+         x-www-form-urlencoded 는 문자셋을 Content-Type 에 적을 수 있고,
+         URLSearchParams 는 값을 항상 UTF-8 퍼센트 인코딩으로 만듭니다.
+         CORS 안전 헤더라서 사전 요청(preflight)도 생기지 않습니다. */
+    function utf8Body(values) {
+      var data = new FormData(form);
+
+      Object.keys(values).forEach(function (name) { data.set(name, values[name]); });
+
+      var params = new URLSearchParams();
+      data.forEach(function (value, name) {
+        if (typeof value === 'string') params.append(name, value); /* 파일 필드는 없습니다 */
+      });
+
+      return params.toString();
+    }
+
     /* Formspree로 AJAX 전송 (Accept: application/json → 페이지 이동 없이 결과 수신).
-       body 는 FormData(multipart/form-data) 라 CORS 사전 요청(preflight)이 없습니다 —
-       폼을 그대로 POST 할 때와 같은 형식입니다.
        source 필드에 접속한 도메인이 담기므로, 여러 사이트가 같은 폼 ID를 써도
        어느 사이트에서 온 문의인지 구분됩니다. */
     function sendToFormspree(mail) {
@@ -779,17 +803,20 @@
       setSending(true);
 
       withRecaptchaToken(function (token) {
-        var data = new FormData(form);
-
-        data.set('_subject', mail.subject);
-        data.set('intent', activeIntent);
-        data.set('source', (window.location && window.location.hostname) || 'monsterlab.monster');
-        if (token) data.set('g-recaptcha-response', token);
+        var extra = {
+          '_subject': mail.subject,
+          'intent': activeIntent,
+          'source': (window.location && window.location.hostname) || 'monsterlab.monster'
+        };
+        if (token) extra['g-recaptcha-response'] = token;
 
         window.fetch(endpoint, {
           method: 'POST',
-          headers: { 'Accept': 'application/json' },
-          body: data
+          headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+          },
+          body: utf8Body(extra)
         }).then(sent, failed);
       });
 

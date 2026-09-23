@@ -371,9 +371,13 @@
              data-recaptcha-key 에 Google reCAPTCHA v3 **사이트 키**를 넣으면 스팸 방지가 켜집니다
              (Formspree 쪽에는 같은 키의 비밀 키를 넣어야 합니다. 비워 두면 외부 요청이 0입니다).
              전송·성공/실패 표시는 script.js의 '문의 폼' 블록이 담당합니다.
-             ID 자리에 REPLACE_ME 가 들어 있으면 예전처럼 메일 앱으로 보냅니다. -->
+             ID 자리에 REPLACE_ME 가 들어 있으면 예전처럼 메일 앱으로 보냅니다.
+             accept-charset="UTF-8" 은 스크립트 없이 폼이 그대로 POST 될 때 브라우저가
+             본문을 UTF-8 로 인코딩하도록 못 박는 장치입니다(한글이 CP949 로 나가면
+             수신 메일이 깨집니다). 스크립트가 보낼 때도 UTF-8 을 명시합니다. -->
         <form class="contact-form" id="contactForm" method="POST"
-              action="https://formspree.io/f/mgavywgr" data-recaptcha-key="" novalidate>
+              action="https://formspree.io/f/mgavywgr" data-recaptcha-key=""
+              accept-charset="UTF-8" novalidate>
           <div class="field">
             <label for="cfName" data-i18n="form.name">이름</label>
             <input id="cfName" name="name" type="text" autocomplete="name" required
@@ -475,6 +479,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="script.js?v=6"></script>
+<script src="script.js?v=7"></script>
 </body>
 </html>

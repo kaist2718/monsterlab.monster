@@ -14,7 +14,7 @@
      1. head의 인라인 스크립트 → script.js 순서로 오류 없이 실행되는가
      2. 언어 전환이 실제로 문구·탭 제목을 바꾸는가 (ko/en 사전에 빈틈은 없는가)
      3. 테마 버튼/강조색 스와치가 선택 상태를 정확히 반영하는가
-     4. 문의 폼 검증과 Formspree 전송(성공·실패·한도, FormData, reCAPTCHA)이 동작하는가
+     4. 문의 폼 검증과 Formspree 전송(성공·실패·한도, UTF-8 본문, reCAPTCHA)이 동작하는가
      6. 한 기능이 실패해도 나머지(특히 언어 전환)는 살아남는가  ← 핵심 회귀 테스트
      7. HTML에 중복 id가 없고, 에셋 URL에 캐시 무효화 버전이 붙어 있는가
    ========================================================================== */
@@ -396,7 +396,13 @@ function makeSandbox(dom, opts) {
     }
 
     has(name) { return this._entries.some((e) => e[0] === String(name)); }
+
+    /* script.js 는 폼 값을 URLSearchParams 로 옮길 때 forEach 를 씁니다. */
+    forEach(cb) { this._entries.forEach((e) => cb(e[1], e[0])); }
   };
+
+  /* 본문을 UTF-8 퍼센트 인코딩으로 만드는 브라우저 내장 API */
+  sandbox.URLSearchParams = URLSearchParams;
 
   /* reCAPTCHA v3 — opts.recaptchaKey 를 주면 스크립트가 로드된 상태를 흑내 냅니다. */
   if (opts && opts.recaptchaKey) {
@@ -454,6 +460,14 @@ function submitForm(page, values) {
   const form = byId.get('contactForm');
   form.dispatch('submit', { preventDefault() {}, target: form });
   return form;
+}
+
+/* 전송 본문은 UTF-8 퍼센트 인코딩 문자열입니다 — 확인하려고 다시 파싱합니다. */
+function sentBody(page, index) {
+  const call = page.sandbox._fetchCalls[index || 0];
+  assert(call, '전송 기록이 없습니다');
+  assert(typeof call.options.body === 'string', '본문이 문자열이 아닙니다');
+  return new URLSearchParams(call.options.body);
 }
 
 const FORMSPREE_URL = 'https://formspree.io/f/xyzabcd12';
@@ -626,7 +640,7 @@ if (index) {
   });
 
   /* ── Formspree 연결 (action에 폼 ID가 있는 경우) ─────────────────────── */
-  check('폼 ID가 있으면 FormData(multipart)로 전송한다', () => {
+  check('폼 ID가 있으면 UTF-8 본문(x-www-form-urlencoded)으로 전송한다', () => {
     const page = runPage('index.html', { formspreeAction: FORMSPREE_URL });
     submitForm(page, { name: '김테스트', email: 'a@b.com', message: '안녕하세요' });
 
@@ -635,11 +649,18 @@ if (index) {
     assert(calls[0].url === FORMSPREE_URL, '전송 주소 = ' + calls[0].url);
     assert(calls[0].options.method === 'POST', 'method = ' + calls[0].options.method);
     assert(calls[0].options.headers.Accept === 'application/json', 'Accept 헤더가 없습니다');
-    assert(calls[0].options.headers['Content-Type'] === undefined,
-      'Content-Type을 직접 지정하면 CORS 사전 요청(preflight)이 생깁니다');
+    /* 어떤 문자셋으로 보내는지 본문에 적혀 있어야 수신 쪽이 한글을 UTF-8 로
+       해석합니다. x-www-form-urlencoded 는 CORS 안전 헤더라 사전 요청이 없습니다. */
+    assert(calls[0].options.headers['Content-Type'] ===
+      'application/x-www-form-urlencoded; charset=UTF-8',
+      'Content-Type = ' + calls[0].options.headers['Content-Type']);
 
-    const body = calls[0].options.body;
-    assert(body && typeof body.get === 'function', '본문이 FormData가 아닙니다');
+    const raw = calls[0].options.body;
+    assert(typeof raw === 'string', '본문이 문자열(UTF-8 퍼센트 인코딩)이 아닙니다');
+    assert(raw.indexOf('name=' + encodeURIComponent('김테스트')) > -1,
+      '한글이 UTF-8 퍼센트 인코딩으로 나가지 않았습니다: ' + raw);
+
+    const body = new URLSearchParams(raw);
     assert(body.get('name') === '김테스트' && body.get('email') === 'a@b.com',
       '이름·이메일이 전달되지 않았습니다');
     assert(body.get('message') === '안녕하세요', '내용이 전달되지 않았습니다');
@@ -650,7 +671,7 @@ if (index) {
     /* 함정 칸은 비어 있고, reCAPTCHA 키가 없으면 토큰도 붙지 않아야 합니다 */
     assert(body.get('_gotcha') === '', '허니팟 칸이 비어 있지 않습니다');
     assert(body.get('g-recaptcha-response') === null, '키가 없는데 reCAPTCHA 토큰이 붙었습니다');
-    return 'POST FormData · _subject·intent·source 확인';
+    return 'POST UTF-8 urlencoded · _subject·intent·source 확인';
   });
 
   check('reCAPTCHA 키가 없으면 Google 스크립트를 부르지 않는다', () => {
@@ -675,7 +696,7 @@ if (index) {
       '사이트 키가 주소에 없습니다: ' + head.children[0].src);
     assert(String(head.children[0].src).indexOf('google.com/recaptcha') > -1,
       'Google reCAPTCHA 주소가 아닙니다: ' + head.children[0].src);
-    assert(page.sandbox._fetchCalls[0].options.body.get('g-recaptcha-response') === 'test-token',
+    assert(sentBody(page, 0).get('g-recaptcha-response') === 'test-token',
       '토큰이 전달되지 않았습니다');
 
     /* 두 번째 전송은 스크립트를 다시 불러오지 않아야 합니다 */
@@ -696,7 +717,7 @@ if (index) {
 
     const calls = page.sandbox._fetchCalls;
     assert(calls.length === 1, 'fetch 호출 ' + calls.length + '회 (전송이 막혔습니다)');
-    assert(calls[0].options.body.get('g-recaptcha-response') === null, '토큰이 붙었습니다');
+    assert(sentBody(page, 0).get('g-recaptcha-response') === null, '토큰이 붙었습니다');
     return '로드 실패 → 토큰 없이 전송 시도';
   });
 
