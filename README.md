@@ -117,8 +117,8 @@ node smoke-test.js
 CSS·JS를 참조할 때 `?v=5` 같은 버전을 붙여 둡니다.
 
 ```html
-<link rel="stylesheet" href="styles.css?v=6" />
-<script src="script.js?v=9"></script>
+<link rel="stylesheet" href="styles.css?v=7" />
+<script src="script.js?v=10"></script>
 ```
 
 **CSS나 JS를 고쳐서 배포할 때는 `index.html`의 해당 `?v=` 숫자를 올리세요.**

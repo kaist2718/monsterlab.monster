@@ -36,6 +36,8 @@
       'preview.prev': '이전 서비스 미리보기',
       'preview.next': '다음 서비스 미리보기',
       'preview.hint': '서비스 설명 보기 ↓',
+      'preview.pause': '자동 전환 일시정지',
+      'preview.play': '자동 전환 다시 재생',
 
       'stats.live': '운영 중인 서비스',
       'stats.lab': '실험 중인 서비스',
@@ -177,6 +179,8 @@
       'preview.prev': 'Previous service preview',
       'preview.next': 'Next service preview',
       'preview.hint': 'View service details ↓',
+      'preview.pause': 'Pause auto-advance',
+      'preview.play': 'Resume auto-advance',
 
       'stats.live': 'Live services',
       'stats.lab': 'In the lab',
@@ -1033,7 +1037,8 @@
   /* ── 12. 히어로 서비스 미리보기 ───────────────────────────────────────
 
      히어로의 미리보기 창이 toeic → engmon → buddha 화면을 자동으로 순환합니다.
-     슬라이드 화면은 index.html의 .preview-slide 블록에 있고, 여기는 전환만 맡습니다.
+     슬라이드 화면은 index.html의 .preview-slide 블록에 있고, 여기는 전환·일시정지·
+     진행 표시를 맡습니다. 자동 전환의 시계는 진행 표시 줄 애니메이션입니다.
      각 슬라이드의 data-url · data-caption-key 가 주소 칸과 캡션을 함께 바꿉니다. */
   guard('히어로 서비스 미리보기', function () {
     var stage = $('previewStage');
@@ -1048,8 +1053,51 @@
     var nextBtn = $('previewNext');
 
     var index = 0;
-    var timer = null;
     var AUTO_MS = 3500;
+
+    var progressEl = $('previewProgress');
+    var fill = $('previewProgressFill');
+    var toggleBtn = $('previewToggle');
+
+    /* 자동 전환은 "진행 표시 줄" 애니메이션이 곧 시계입니다.
+       애니메이션이 끝나면 다음 슬라이드로 넘어가고, 멈출 때는 애니메이션을
+       일시정지하므로 표시와 실제 전환 시각이 항상 일치합니다. */
+    var manualPaused = false;
+    var hoverPaused = false;
+    var hiddenTab = false;
+    var offView = false;
+
+    function isPlaying() {
+      return !reduceMotion && !manualPaused && !hoverPaused && !hiddenTab && !offView;
+    }
+
+    function syncPlayback() {
+      var playing = isPlaying();
+      if (fill) fill.style.animationPlayState = playing ? 'running' : 'paused';
+
+      if (toggleBtn) {
+        toggleBtn.setAttribute('data-i18n-aria-label', playing ? 'preview.pause' : 'preview.play');
+        toggleBtn.setAttribute('aria-label', t(playing ? 'preview.pause' : 'preview.play'));
+        toggleBtn.textContent = playing ? '⏸️' : '▶️';
+      }
+    }
+
+    /* 새 주기를 시작합니다 — 슬라이드가 바뀌거나 다시 재개할 때 호출합니다.
+       멈춰 있던 애니메이션을 되살리는 대신 처음부터 다시 채워, 언제나 다음
+       전환이 일어나도록 합니다. */
+    function restartProgress() {
+      if (!fill || reduceMotion) return;
+      fill.style.animationDuration = AUTO_MS + 'ms';
+      fill.classList.remove('is-running');
+      void fill.offsetWidth;
+      fill.classList.add('is-running');
+      syncPlayback();
+    }
+
+    /* 멈춤 해제 시 호출 — 재생 중이면 주기를 처음부터 다시 시작합니다 */
+    function resume() {
+      if (isPlaying()) restartProgress(); else syncPlayback();
+    }
 
     function show(next, dir) {
       var prev = index;
@@ -1092,22 +1140,19 @@
           captionEl.textContent = t(key);
         }
       }
+
+      restartProgress();
     }
 
-    function stop() {
-      if (timer) { clearInterval(timer); timer = null; }
-    }
-
-    function start() {
-      stop();
-      /* 모션 최소화 설정이면 자동 전환하지 않습니다 — 수동 조작은 그대로 됩니다 */
-      if (reduceMotion || typeof setInterval !== 'function') return;
-      timer = setInterval(function () { show(index + 1, 1); }, AUTO_MS);
-    }
+    /* 진행 표시 줄이 다 차면 다음 슬라이드로 넘어갑니다 */
+    on(fill, 'animationend', function (e) {
+      if (!isPlaying()) return; /* 멈춘 동안 끝난 애니메이션은 반영하지 않습니다 */
+      if (e && e.animationName && e.animationName !== 'preview-progress') return;
+      show(index + 1, 1);
+    });
 
     function go(step) {
-      show(index + step, step > 0 ? 1 : -1);
-      start(); /* 손으로 넘기면 자동 전환 타이머를 다시 시작합니다 */
+      show(index + step, step > 0 ? 1 : -1); /* 진행 표시 줄도 새로 시작합니다 */
     }
 
     /* 슬라이드·점·설명 버튼 → 해당 서비스 카드로 이동하고 잠깐 강조합니다 */
@@ -1137,7 +1182,6 @@
     dots.forEach(function (dot, i) {
       on(dot, 'click', function () {
         show(i, i > index ? 1 : -1);
-        start();
         goToService(slides[i]);
       });
     });
@@ -1147,14 +1191,20 @@
       on(slide, 'click', function () { goToService(slide); });
     });
     on($('previewHint'), 'click', function () { goToService(slides[index]); });
+
+    /* 일시정지/재생 버튼 — 손으로 멈춘 동안은 자동 전환하지 않습니다 */
+    on(toggleBtn, 'click', function () {
+      manualPaused = !manualPaused;
+      resume();
+    });
     on(prevBtn, 'click', function () { go(-1); });
     on(nextBtn, 'click', function () { go(1); });
 
     /* 마우스를 올리거나 키보드로 들어오면 멈추고, 떠나면 다시 돕니다 */
-    on(carousel, 'mouseenter', stop);
-    on(carousel, 'mouseleave', start);
-    on(carousel, 'focusin', stop);
-    on(carousel, 'focusout', start);
+    on(carousel, 'mouseenter', function () { hoverPaused = true; syncPlayback(); });
+    on(carousel, 'mouseleave', function () { hoverPaused = false; resume(); });
+    on(carousel, 'focusin', function () { hoverPaused = true; syncPlayback(); });
+    on(carousel, 'focusout', function () { hoverPaused = false; resume(); });
 
     /* 모바일 스와이프 (40px 이상 밀어야 넘어갑니다) */
     var touchX = null;
@@ -1173,20 +1223,27 @@
 
     /* 다른 탭을 보면 멈췄다가, 돌아오면 다시 돕니다 */
     on(document, 'visibilitychange', function () {
-      if (document.hidden) stop(); else start();
+      hiddenTab = !!document.hidden;
+      resume();
     });
 
     /* 히어로가 화면 밖으로 나가면 멈췄다가, 다시 보이면 이어갑니다 */
     if (carousel && 'IntersectionObserver' in window) {
       new IntersectionObserver(function (entries) {
         entries.forEach(function (entry) {
-          if (entry.isIntersecting) start(); else stop();
+          offView = !entry.isIntersecting;
+          resume();
         });
       }, { threshold: 0.15 }).observe(carousel);
     }
 
+    /* 모션 최소화 설정이면 자동 전환 대신 수동 조작만 씁니다 */
+    if (reduceMotion) {
+      if (progressEl) progressEl.hidden = true;
+      if (toggleBtn) toggleBtn.hidden = true;
+    }
+
     show(0);
-    start();
   });
 
   /* ── 13. 푸터 연도 ─────────────────────────────────────────────────── */
