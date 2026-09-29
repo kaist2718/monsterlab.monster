@@ -7,14 +7,14 @@ MonsterLab가 운영하는 서비스:
 | 서비스 | 주소 | 저장소 |
 | --- | --- | --- |
 | 토익 학습 | [toeic.monster](https://toeic.monster) | — |
-| 월간 영어 매거진 **EngMon** | [engmon.monster](https://engmon.monster) | `engmon.monster` (별도 저장소) |
+| 1년 52주 영어 매거진 **EngMon** | [engmon.monster](https://engmon.monster) | `engmon.monster` (별도 저장소) |
 | 법구경 영·한 대역 | [buddha.monster](https://buddha.monster) | — |
 
 ## 구조
 
 ```
 index.html     # 홈페이지 마크업 (소개·서비스·로드맵·FAQ·문의)
-script.js      # 한/영 전환, 테마·강조색, 모바일 메뉴, 스크롤 효과 + i18n 사전
+script.js      # 한/영 전환, 테마·강조색, 모바일 메뉴, 스크롤 효과, 히어로 미리보기 캐러셀 + i18n 사전
 styles.css     # 스타일 (다크/라이트 테마, 강조색 프리셋, 반응형)
 smoke-test.js  # 검증 스크립트 (배포 전 `node smoke-test.js`)
 sitemap.xml    # 검색엔진용 사이트맵 (페이지 추가 시 <url> 블록 복사)
@@ -117,8 +117,8 @@ node smoke-test.js
 CSS·JS를 참조할 때 `?v=5` 같은 버전을 붙여 둡니다.
 
 ```html
-<link rel="stylesheet" href="styles.css?v=5" />
-<script src="script.js?v=6"></script>
+<link rel="stylesheet" href="styles.css?v=6" />
+<script src="script.js?v=9"></script>
 ```
 
 **CSS나 JS를 고쳐서 배포할 때는 `index.html`의 해당 `?v=` 숫자를 올리세요.**

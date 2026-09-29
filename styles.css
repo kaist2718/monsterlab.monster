@@ -330,7 +330,13 @@ a  { color: inherit; text-decoration: none; }
   border: 1px solid var(--border);
   border-radius: 999px;
 }
-.preview-body { position: relative; padding: 20px 20px 22px; }
+.preview-body {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-height: 288px; /* 슬라이드마다 높이가 같아야 넘어갈 때 창이 흔들리지 않습니다 */
+  padding: 20px 20px 22px;
+}
 .preview-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 16px; }
 .preview-chip {
   padding: 3px 10px;
@@ -367,7 +373,7 @@ a  { color: inherit; text-decoration: none; }
   background: linear-gradient(90deg, var(--accent), var(--accent-2));
   border-radius: inherit;
 }
-.preview-foot { display: flex; flex-wrap: wrap; gap: 8px; }
+.preview-foot { display: flex; flex-wrap: wrap; gap: 8px; margin-top: auto; }
 .preview-tag {
   padding: 3px 10px;
   font-size: .72rem;
@@ -377,6 +383,100 @@ a  { color: inherit; text-decoration: none; }
   border-radius: 999px;
 }
 .preview-caption { margin: 14px 0 0; font-size: .78rem; color: var(--text-dim); text-align: center; }
+
+/* ── Hero preview carousel ──────────────────────────────────────────────
+   히어로 미리보기가 toeic → engmon → buddha 화면을 순환합니다.
+   슬라이드는 겹쳐 두고 opacity로 넘어가고, 전환 로직은 script.js가 담당합니다. */
+.preview-stage { position: relative; }
+.preview-slide {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  visibility: hidden;
+  cursor: pointer; /* 슬라이드를 누르면 해당 서비스 설명으로 이동합니다 */
+  transform: translateX(16px);
+  transition: opacity .5s ease, transform .5s ease, visibility 0s linear .5s;
+}
+.preview-slide.is-active {
+  position: relative;
+  inset: auto;
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: opacity .5s ease, transform .5s ease;
+}
+.preview-slide.is-active:hover { box-shadow: inset 0 0 0 2px rgb(var(--accent-rgb) / .35); }
+
+.preview-nav {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  margin-top: 16px;
+}
+.preview-arrow {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  font-size: 1.2rem;
+  line-height: 1;
+  color: var(--text-soft);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  cursor: pointer;
+  transition: color .2s ease, background .2s ease, border-color .2s ease;
+}
+.preview-arrow:hover {
+  color: var(--accent);
+  background: rgb(var(--accent-rgb) / .1);
+  border-color: rgb(var(--accent-rgb) / .5);
+}
+.preview-dots { display: flex; align-items: center; gap: 8px; }
+.preview-dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  background: var(--border);
+  border: 0;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: width .25s ease, background .25s ease;
+}
+.preview-dot:hover { background: var(--text-dim); }
+.preview-dot.is-active { width: 22px; background: var(--accent); }
+
+/* 슬라이드 안쪽 목업 조각들 (engmon 목차 · buddha 대역) */
+.preview-list { list-style: none; margin: 0 0 14px; padding: 0; display: grid; gap: 8px; }
+.preview-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 9px 12px;
+  background: var(--bg);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+}
+.preview-item-name { font-size: .85rem; font-weight: 600; color: var(--text-soft); }
+.preview-item-meta { font-size: .75rem; color: var(--text-dim); }
+.preview-verse-en { margin: 0 0 12px; font-size: .93rem; font-weight: 650; line-height: 1.6; color: var(--text); }
+.preview-verse-ko { margin: 0 0 12px; font-size: .88rem; line-height: 1.8; color: var(--text-soft); }
+
+.preview-hint {
+  display: block;
+  margin: 8px auto 0;
+  padding: 4px 10px;
+  font-size: .78rem;
+  font-weight: 650;
+  color: var(--accent);
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+}
+.preview-hint:hover { text-decoration: underline; }
 
 .badge {
   display: inline-block;
@@ -491,6 +591,13 @@ a  { color: inherit; text-decoration: none; }
 }
 .service-soon { opacity: .82; }
 .service-soon:hover { border-color: var(--border); }
+
+/* 히어로 미리보기에서 넘어올 때 헤더에 가리지 않게 하고, 도착한 카드를 잠깐 강조합니다 */
+.service { scroll-margin-top: 96px; }
+.service.is-highlighted {
+  border-color: rgb(var(--accent-rgb) / .65);
+  box-shadow: 0 0 0 3px rgb(var(--accent-rgb) / .22), 0 22px 50px -34px rgb(var(--accent-rgb) / .85);
+}
 
 .service-head { display: flex; align-items: center; gap: 8px; margin-bottom: 14px; }
 .service-dot {

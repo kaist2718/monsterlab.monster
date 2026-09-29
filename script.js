@@ -30,7 +30,12 @@
       'hero.subtitle': 'MonsterLab는 학습부터 도구까지, 사람들이 매일 쓰는 서비스를 만듭니다. 지금 <strong>toeic.monster</strong>·<strong>engmon.monster</strong>·<strong>buddha.monster</strong>를 운영하고 있고, 더 많은 실험을 준비 중입니다.',
       'hero.ctaPrimary': '서비스 둘러보기',
       'hero.ctaSecondary': 'toeic.monster 바로가기',
-      'preview.caption': 'toeic.monster 학습 화면 미리보기',
+      'preview.caption.toeic': 'toeic.monster 학습 화면 미리보기',
+      'preview.caption.engmon': 'engmon.monster 매거진 화면 미리보기',
+      'preview.caption.buddha': 'buddha.monster 법구경 대역 화면 미리보기',
+      'preview.prev': '이전 서비스 미리보기',
+      'preview.next': '다음 서비스 미리보기',
+      'preview.hint': '서비스 설명 보기 ↓',
 
       'stats.live': '운영 중인 서비스',
       'stats.lab': '실험 중인 서비스',
@@ -55,7 +60,7 @@
       'service.toeic.desc': '토익 학습을 더 가볍게. 문제 풀이와 오답 관리로 점수를 끌어올리는 영어 시험 학습 서비스.',
       'service.visit': '사이트 방문',
       'service.soonCta': '곧 공개됩니다',
-      'service.mag.desc': '호(issue) 단위로 읽는 월간 영어 매거진. 테마 어휘·문법·이디엄·대화·확인 문제를 오디오와 함께 한 호에 담습니다.',
+      'service.mag.desc': '1년 52주 플랜으로 읽는 주간 영어 매거진. 주(week)마다 테마 어휘·구동사·연어·문법·발음·회화·받아쓰기·확인 문제를 오디오와 함께 담습니다.',
       'service.buddha.desc': '법구경 26품 423게송을 영어 원문과 우리말 번역으로 함께 읽는 무료 대역 판본. 품별 해설과 오늘의 법구, 게송 검색까지 가입 없이 이용할 수 있습니다.',
       'service.s1.name': '새로운 학습 서비스',
       'service.s1.desc': '시험 대비를 넘어 매일 짧게 이어가는 학습 루틴을 만들고 있습니다.',
@@ -71,7 +76,7 @@
       'roadmap.i1.body': '토익 학습 서비스를 운영하며 사용자 피드백을 쌓고 있습니다.',
       'roadmap.i2.date': 'Launched',
       'roadmap.i2.title': 'engmon.monster 출시',
-      'roadmap.i2.body': '월간 영어 매거진 EngMon을 공개했습니다.',
+      'roadmap.i2.body': '1년 52주 영어 매거진 EngMon을 공개했습니다.',
       'roadmap.i3.date': 'Launched',
       'roadmap.i3.title': 'buddha.monster 출시',
       'roadmap.i3.body': '법구경 26품 423게송을 영어 원문과 우리말 번역으로 담은 판본을 공개했습니다.',
@@ -166,7 +171,12 @@
       'hero.subtitle': 'MonsterLab builds services people open every day — from studying to everyday tools. We run <strong>toeic.monster</strong>, <strong>engmon.monster</strong> and <strong>buddha.monster</strong>, with more experiments on the way.',
       'hero.ctaPrimary': 'Explore services',
       'hero.ctaSecondary': 'Visit toeic.monster',
-      'preview.caption': 'A look at the toeic.monster study screen',
+      'preview.caption.toeic': 'A look at the toeic.monster study screen',
+      'preview.caption.engmon': 'A look at the engmon.monster magazine screen',
+      'preview.caption.buddha': 'A look at the buddha.monster bilingual Dhammapada screen',
+      'preview.prev': 'Previous service preview',
+      'preview.next': 'Next service preview',
+      'preview.hint': 'View service details ↓',
 
       'stats.live': 'Live services',
       'stats.lab': 'In the lab',
@@ -191,7 +201,7 @@
       'service.toeic.desc': 'TOEIC prep made lighter. Practice questions and mistake tracking that push your score up.',
       'service.visit': 'Visit site',
       'service.soonCta': 'Coming soon',
-      'service.mag.desc': 'A monthly English magazine read one issue at a time — theme vocabulary, grammar, idioms, dialogues and a quiz, with audio in every issue.',
+      'service.mag.desc': 'A weekly English magazine on a 52-week plan — theme vocabulary, phrasal verbs, collocations, grammar, pronunciation, dialogues, dictation and quizzes every week, all with audio.',
       'service.buddha.desc': 'The Dhammapada in full — 26 chapters, 423 verses, English original beside a Korean translation. Chapter notes, a verse of the day and verse search, all free with no sign-up.',
       'service.s1.name': 'A new learning service',
       'service.s1.desc': 'Beyond test prep — we are building a short, daily learning routine.',
@@ -207,7 +217,7 @@
       'roadmap.i1.body': 'Operating a TOEIC learning service and collecting real user feedback.',
       'roadmap.i2.date': 'Launched',
       'roadmap.i2.title': 'engmon.monster launch',
-      'roadmap.i2.body': 'We shipped EngMon, a monthly English magazine.',
+      'roadmap.i2.body': 'We shipped EngMon, a 52-week English magazine.',
       'roadmap.i3.date': 'Launched',
       'roadmap.i3.title': 'buddha.monster launch',
       'roadmap.i3.body': 'We shipped the Dhammapada in full — 423 verses, English original beside a Korean translation.',
@@ -1020,7 +1030,166 @@
     on(window, 'scroll', onScroll, { passive: true });
   });
 
-  /* ── 12. 푸터 연도 ─────────────────────────────────────────────────── */
+  /* ── 12. 히어로 서비스 미리보기 ───────────────────────────────────────
+
+     히어로의 미리보기 창이 toeic → engmon → buddha 화면을 자동으로 순환합니다.
+     슬라이드 화면은 index.html의 .preview-slide 블록에 있고, 여기는 전환만 맡습니다.
+     각 슬라이드의 data-url · data-caption-key 가 주소 칸과 캡션을 함께 바꿉니다. */
+  guard('히어로 서비스 미리보기', function () {
+    var stage = $('previewStage');
+    var slides = $$('.preview-slide');
+    if (!stage || slides.length < 2) return;
+
+    var carousel = $('previewCarousel');
+    var urlEl = $('previewUrl');
+    var captionEl = $('previewCaption');
+    var dots = $$('.preview-dot');
+    var prevBtn = $('previewPrev');
+    var nextBtn = $('previewNext');
+
+    var index = 0;
+    var timer = null;
+    var AUTO_MS = 3500;
+
+    function show(next, dir) {
+      var prev = index;
+      var target = ((next % slides.length) + slides.length) % slides.length;
+      var direction = dir || (target > prev ? 1 : -1);
+
+      if (target !== prev) {
+        var outgoing = slides[prev];
+        var incoming = slides[target];
+
+        /* 나가는 슬라이드는 진행 방향 반대쪽으로 밀려나고 */
+        outgoing.style.transform = 'translateX(' + (direction > 0 ? -26 : 26) + 'px)';
+        outgoing.classList.remove('is-active');
+
+        /* 들어오는 슬라이드는 반대편에서 미끄러져 들어옵니다
+           (전환 없이 시작 위치로 점프한 뒤 되돌리며 등장) */
+        incoming.style.transition = 'none';
+        incoming.style.transform = 'translateX(' + (direction > 0 ? 26 : -26) + 'px)';
+        void incoming.offsetWidth;
+        incoming.style.transition = '';
+        incoming.style.transform = '';
+        incoming.classList.add('is-active');
+      }
+
+      index = target;
+
+      dots.forEach(function (dot, i) {
+        dot.classList.toggle('is-active', i === index);
+        dot.setAttribute('aria-pressed', i === index ? 'true' : 'false');
+      });
+
+      var slide = slides[index];
+      if (urlEl) urlEl.textContent = slide.getAttribute('data-url') || '';
+
+      if (captionEl) {
+        var key = slide.getAttribute('data-caption-key');
+        if (key) {
+          /* data-i18n 속성도 함께 바꿔, 언어를 전환해도 새 슬라이드 문구가 유지됩니다 */
+          captionEl.setAttribute('data-i18n', key);
+          captionEl.textContent = t(key);
+        }
+      }
+    }
+
+    function stop() {
+      if (timer) { clearInterval(timer); timer = null; }
+    }
+
+    function start() {
+      stop();
+      /* 모션 최소화 설정이면 자동 전환하지 않습니다 — 수동 조작은 그대로 됩니다 */
+      if (reduceMotion || typeof setInterval !== 'function') return;
+      timer = setInterval(function () { show(index + 1, 1); }, AUTO_MS);
+    }
+
+    function go(step) {
+      show(index + step, step > 0 ? 1 : -1);
+      start(); /* 손으로 넘기면 자동 전환 타이머를 다시 시작합니다 */
+    }
+
+    /* 슬라이드·점·설명 버튼 → 해당 서비스 카드로 이동하고 잠깐 강조합니다 */
+    var highlightTimer = null;
+    var highlightedCard = null;
+
+    function goToService(slide) {
+      var targetId = slide && slide.getAttribute('data-target');
+      var card = targetId ? document.getElementById(targetId) : null;
+      if (!card) return;
+
+      if (card.scrollIntoView) {
+        card.scrollIntoView({ behavior: reduceMotion ? 'auto' : 'smooth', block: 'center' });
+      }
+
+      /* 빠르게 연달아 누르면 이전 카드의 강조가 남지 않도록 먼저 지웁니다 */
+      if (highlightedCard) highlightedCard.classList.remove('is-highlighted');
+      highlightedCard = card;
+      card.classList.add('is-highlighted');
+      clearTimeout(highlightTimer);
+      highlightTimer = setTimeout(function () {
+        card.classList.remove('is-highlighted');
+        if (highlightedCard === card) highlightedCard = null;
+      }, 2400);
+    }
+
+    dots.forEach(function (dot, i) {
+      on(dot, 'click', function () {
+        show(i, i > index ? 1 : -1);
+        start();
+        goToService(slides[i]);
+      });
+    });
+
+    /* 슬라이드 화면을 눌러도 해당 서비스 설명으로 이동합니다 */
+    slides.forEach(function (slide) {
+      on(slide, 'click', function () { goToService(slide); });
+    });
+    on($('previewHint'), 'click', function () { goToService(slides[index]); });
+    on(prevBtn, 'click', function () { go(-1); });
+    on(nextBtn, 'click', function () { go(1); });
+
+    /* 마우스를 올리거나 키보드로 들어오면 멈추고, 떠나면 다시 돕니다 */
+    on(carousel, 'mouseenter', stop);
+    on(carousel, 'mouseleave', start);
+    on(carousel, 'focusin', stop);
+    on(carousel, 'focusout', start);
+
+    /* 모바일 스와이프 (40px 이상 밀어야 넘어갑니다) */
+    var touchX = null;
+    on(carousel, 'touchstart', function (e) {
+      touchX = e.touches && e.touches[0] ? e.touches[0].clientX : null;
+    }, { passive: true });
+    on(carousel, 'touchend', function (e) {
+      if (touchX == null) return;
+      var endX = e.changedTouches && e.changedTouches[0]
+        ? e.changedTouches[0].clientX : touchX;
+      var dx = endX - touchX;
+      touchX = null;
+      if (Math.abs(dx) < 40) return;
+      go(dx < 0 ? 1 : -1);
+    });
+
+    /* 다른 탭을 보면 멈췄다가, 돌아오면 다시 돕니다 */
+    on(document, 'visibilitychange', function () {
+      if (document.hidden) stop(); else start();
+    });
+
+    /* 히어로가 화면 밖으로 나가면 멈췄다가, 다시 보이면 이어갑니다 */
+    if (carousel && 'IntersectionObserver' in window) {
+      new IntersectionObserver(function (entries) {
+        entries.forEach(function (entry) {
+          if (entry.isIntersecting) start(); else stop();
+        });
+      }, { threshold: 0.15 }).observe(carousel);
+    }
+
+    show(0);
+    start();
+  });
+
+  /* ── 13. 푸터 연도 ─────────────────────────────────────────────────── */
   guard('푸터 연도', function () {
     var yearEl = $('year');
     if (yearEl) yearEl.textContent = String(new Date().getFullYear());

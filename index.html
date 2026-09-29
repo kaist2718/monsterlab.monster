@@ -53,13 +53,13 @@
   "description": "작은 아이디어를 괴물 같은 서비스로. toeic.monster · engmon.monster · buddha.monster를 운영하는 실험실.",
   "owns": [
     { "@type": "WebSite", "name": "toeic.monster", "url": "https://toeic.monster", "description": "토익 학습 서비스 — 문제 풀이와 오답 관리로 점수를 끌어올리는 영어 시험 학습" },
-    { "@type": "WebSite", "name": "engmon.monster", "url": "https://engmon.monster", "description": "월간 영어 매거진 EngMon — 어휘·문법·이디엄·대화·확인 문제를 오디오와 함께" },
+    { "@type": "WebSite", "name": "engmon.monster", "url": "https://engmon.monster", "description": "1년 52주 영어 매거진 EngMon — 테마 어휘·구동사·연어·문법·발음·회화·받아쓰기·확인 문제를 오디오와 함께" },
     { "@type": "WebSite", "name": "buddha.monster", "url": "https://buddha.monster", "description": "법구경 26품 423게송 영·한 대역 판본 — 품별 해설, 오늘의 법구, 게송 검색" }
   ]
 }
 </script>
 <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='9' fill='%230a0e13'/%3E%3Ctext x='16' y='23' font-size='19' text-anchor='middle' fill='%236ee7a8' font-family='sans-serif' font-weight='bold'%3EM%3C/text%3E%3C/svg%3E" />
-<link rel="stylesheet" href="styles.css?v=5" />
+<link rel="stylesheet" href="styles.css?v=6" />
 <!-- 방문 분석 (자체 호스팅) — 쿠키를 쓰지 않아 동의 배너가 필요 없습니다.
      수집 서버 주소와 도메인은 아래 태그에서만 정합니다.
      자세한 내용은 README 의 "방문 분석" 항목을 보세요. -->
@@ -130,32 +130,92 @@
       </div>
       </div>
 
-      <div class="hero-preview">
+      <!-- 히어로 미리보기 — 운영 중인 3개 서비스 화면이 자동으로 순환하는 캐러셀.
+           화면 목업은 CSS로 그립니다(이미지 파일 없음). 전환·화살표·점·스와이프는
+           script.js의 '히어로 서비스 미리보기' 블록이 담당합니다. -->
+      <div class="hero-preview" id="previewCarousel">
         <div class="preview-window" aria-hidden="true">
           <div class="preview-bar">
             <span class="pv-dot"></span><span class="pv-dot"></span><span class="pv-dot"></span>
-            <span class="preview-url">toeic.monster</span>
+            <span class="preview-url" id="previewUrl">toeic.monster</span>
           </div>
-          <div class="preview-body">
-            <div class="preview-row">
-              <span class="preview-chip">Part 5 · 문법</span>
-              <span class="preview-count">12 / 20</span>
+          <div class="preview-stage" id="previewStage">
+
+            <!-- toeic.monster — 문제 풀이 화면 -->
+            <div class="preview-slide is-active" data-url="toeic.monster" data-caption-key="preview.caption.toeic" data-target="service-toeic">
+              <div class="preview-body">
+                <div class="preview-row">
+                  <span class="preview-chip">Part 5 · 문법</span>
+                  <span class="preview-count">12 / 20</span>
+                </div>
+                <p class="preview-q">The report must be submitted ___ Friday.</p>
+                <div class="preview-options">
+                  <span class="preview-opt">until</span>
+                  <span class="preview-opt is-correct">by</span>
+                  <span class="preview-opt">since</span>
+                  <span class="preview-opt">during</span>
+                </div>
+                <div class="preview-track"><span class="preview-fill"></span></div>
+                <div class="preview-foot">
+                  <span class="preview-tag">오답 자동 복습</span>
+                  <span class="preview-tag">점수 추이</span>
+                </div>
+              </div>
             </div>
-            <p class="preview-q">The report must be submitted ___ Friday.</p>
-            <div class="preview-options">
-              <span class="preview-opt">until</span>
-              <span class="preview-opt is-correct">by</span>
-              <span class="preview-opt">since</span>
-              <span class="preview-opt">during</span>
+
+            <!-- engmon.monster — 주간 매거진 화면 -->
+            <div class="preview-slide" data-url="engmon.monster" data-caption-key="preview.caption.engmon" data-target="service-engmon">
+              <div class="preview-body">
+                <div class="preview-row">
+                  <span class="preview-chip">WEEK 01 · 여행 영어</span>
+                  <span class="preview-count">오디오 포함</span>
+                </div>
+                <p class="preview-q">이번 주의 섹션 — 듣고, 읽고, 점검하기</p>
+                <ul class="preview-list">
+                  <li class="preview-item"><span class="preview-item-name">테마 어휘 · 구동사 · 연어</span><span class="preview-item-meta">오디오</span></li>
+                  <li class="preview-item"><span class="preview-item-name">문법 · 발음</span><span class="preview-item-meta">오디오</span></li>
+                  <li class="preview-item"><span class="preview-item-name">회화 · 받아쓰기 · 확인 문제</span><span class="preview-item-meta">채점</span></li>
+                </ul>
+                <div class="preview-foot">
+                  <span class="preview-tag">단어장 · 복습 카드</span>
+                  <span class="preview-tag">1년 52주 플랜</span>
+                </div>
+              </div>
             </div>
-            <div class="preview-track"><span class="preview-fill"></span></div>
-            <div class="preview-foot">
-              <span class="preview-tag">오답 자동 복습</span>
-              <span class="preview-tag">점수 추이</span>
+
+            <!-- buddha.monster — 법구경 영·한 대역 화면 -->
+            <div class="preview-slide" data-url="buddha.monster" data-caption-key="preview.caption.buddha" data-target="service-buddha">
+              <div class="preview-body">
+                <div class="preview-row">
+                  <span class="preview-chip">오늘의 법구</span>
+                  <span class="preview-count">법구경 5게송 · 제1품 쌍구품</span>
+                </div>
+                <p class="preview-verse-en">For hatred does not cease by hatred at any time: hatred ceases by love, this is an old rule.</p>
+                <p class="preview-verse-ko">증오는 결코 증오로 가라앉지 않는다. 사랑으로만 증오는 가라앉는다. 이는 오래된 법칙이다.</p>
+                <div class="preview-track"><span class="preview-fill"></span></div>
+                <div class="preview-foot">
+                  <span class="preview-tag">26품 423게송</span>
+                  <span class="preview-tag">게송 검색</span>
+                  <span class="preview-tag">영·한 대역</span>
+                </div>
+              </div>
             </div>
+
           </div>
         </div>
-        <p class="preview-caption" data-i18n="preview.caption">toeic.monster 학습 화면 미리보기</p>
+
+        <div class="preview-nav">
+          <button class="preview-arrow" id="previewPrev" type="button" data-i18n-aria-label="preview.prev" aria-label="이전 서비스 미리보기"><span aria-hidden="true">‹</span></button>
+          <div class="preview-dots">
+            <button class="preview-dot is-active" type="button" data-slide="0" aria-label="toeic.monster" aria-pressed="true"></button>
+            <button class="preview-dot" type="button" data-slide="1" aria-label="engmon.monster" aria-pressed="false"></button>
+            <button class="preview-dot" type="button" data-slide="2" aria-label="buddha.monster" aria-pressed="false"></button>
+          </div>
+          <button class="preview-arrow" id="previewNext" type="button" data-i18n-aria-label="preview.next" aria-label="다음 서비스 미리보기"><span aria-hidden="true">›</span></button>
+        </div>
+
+        <p class="preview-caption" id="previewCaption" data-i18n="preview.caption.toeic">toeic.monster 학습 화면 미리보기</p>
+        <button class="preview-hint" id="previewHint" type="button" data-i18n="preview.hint">서비스 설명 보기 ↓</button>
       </div>
 
       <ul class="stats">
@@ -217,7 +277,7 @@
       <div class="service-grid">
 
         <!-- ✅ 운영 중 -->
-        <article class="service service-live">
+        <article class="service service-live" id="service-toeic">
           <div class="service-head">
             <span class="service-dot" aria-hidden="true"></span>
             <span class="status status-live" data-i18n="status.live">운영 중</span>
@@ -232,14 +292,14 @@
         </article>
 
         <!-- ✅ 운영 중 -->
-        <article class="service service-live">
+        <article class="service service-live" id="service-engmon">
           <div class="service-head">
             <span class="service-dot" aria-hidden="true"></span>
             <span class="status status-live" data-i18n="status.live">운영 중</span>
           </div>
           <h3 class="service-name">engmon<span class="accent">.monster</span></h3>
           <p class="service-desc" data-i18n="service.mag.desc">
-            호(issue) 단위로 읽는 월간 영어 매거진. 테마 어휘·문법·이디엄·대화·확인 문제를 오디오와 함께 한 호에 담습니다.
+            1년 52주 플랜으로 읽는 주간 영어 매거진. 주(week)마다 테마 어휘·구동사·연어·문법·발음·회화·받아쓰기·확인 문제를 오디오와 함께 담습니다.
           </p>
           <a class="service-link" href="https://engmon.monster" target="_blank" rel="noopener">
             <span data-i18n="service.visit">사이트 방문</span> <span aria-hidden="true">↗</span>
@@ -247,7 +307,7 @@
         </article>
 
         <!-- ✅ 운영 중 -->
-        <article class="service service-live">
+        <article class="service service-live" id="service-buddha">
           <div class="service-head">
             <span class="service-dot" aria-hidden="true"></span>
             <span class="status status-live" data-i18n="status.live">운영 중</span>
@@ -319,7 +379,7 @@
           <div>
             <p class="tl-date" data-i18n="roadmap.i2.date">Launched</p>
             <h3 data-i18n="roadmap.i2.title">engmon.monster 출시</h3>
-            <p data-i18n="roadmap.i2.body">월간 영어 매거진 EngMon을 공개했습니다.</p>
+            <p data-i18n="roadmap.i2.body">1년 52주 영어 매거진 EngMon을 공개했습니다.</p>
           </div>
         </li>
         <li>
@@ -515,6 +575,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="script.js?v=8"></script>
+<script src="script.js?v=9"></script>
 </body>
 </html>
