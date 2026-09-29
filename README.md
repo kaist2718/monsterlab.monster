@@ -8,6 +8,7 @@ MonsterLab가 운영하는 서비스:
 | --- | --- | --- |
 | 토익 학습 | [toeic.monster](https://toeic.monster) | — |
 | 월간 영어 매거진 **EngMon** | [engmon.monster](https://engmon.monster) | `engmon.monster` (별도 저장소) |
+| 법구경 영·한 대역 | [buddha.monster](https://buddha.monster) | — |
 
 ## 구조
 
@@ -17,6 +18,10 @@ script.js      # 한/영 전환, 테마·강조색, 모바일 메뉴, 스크롤 
 styles.css     # 스타일 (다크/라이트 테마, 강조색 프리셋, 반응형)
 analytics.js   # 방문 분석 (Counter.dev) — 사이트 ID를 넣기 전에는 아무 것도 안 함
 smoke-test.js  # 검증 스크립트 (배포 전 `node smoke-test.js`)
+sitemap.xml    # 검색엔진용 사이트맵 (페이지 추가 시 <url> 블록 복사)
+robots.txt     # 크롤링 허용 + 사이트맵 위치 안내
+og-image.png   # 공유 카드 이미지 (1200×630) — og-card.html을 Chrome으로 렌더링
+og-card.html   # 공유 카드 이미지 소스 (배포 페이지 아님)
 CNAME          # GitHub Pages 커스텀 도메인 (monsterlab.monster)
 ```
 
@@ -58,6 +63,10 @@ node smoke-test.js
 - **회귀 테스트**: 테마 초기화가 강제로 실패해도 언어 전환이 살아남는지 검사합니다.
   (실제로 배포된 사이트가 이 문제로 테마 아이콘과 언어 전환이 함께 죽은 적이 있습니다.)
 - **사전 검사**: `data-i18n` 키가 ko/en 양쪽에 모두 있는지, 쓰이지 않는 키가 없는지 확인합니다.
+- **바인딩 검사**: HTML 태그(`<br>`, `<strong>` 등)가 든 i18n 값은 `data-i18n-html`로만 붙는지 확인합니다.
+  `data-i18n`(textContent)으로 붙으면 언어 전환 시 태그가 글자 그대로 보입니다(실제로 hero.subtitle에서 이 일이 있었습니다).
+- **문구 일치 검사**: `index.html`에 적힌 한국어 기본 문구가 ko 사전과 같은지 확인합니다.
+  어긋나면 "페이지를 열 때"와 "언어를 돌렸다 올 때" 문구가 달라집니다(실제로 service.mag.desc·faq.a2에서 이 일이 있었습니다).
 
 ## 방문 분석 — Counter.dev
 
@@ -101,7 +110,7 @@ IP도 저장하지 않아 **동의 배너가 필요 없습니다.** 화면이 �
 - **입력창에 적은 값은 보내지 않습니다.** 문의 폼의 이름·이메일·내용은 가지 않습니다.
 - **쿠키를 쓰지 않고** IP 주소를 저장하지 않습니다 — EEA·영국 방문자에게도 동의 배너가 필요 없습니다.
 
-> `toeic.monster` · `engmon.monster` 도 같은 방식입니다. Counter.dev 는 **사이트마다 ID가 다르므로**
+> `toeic.monster` · `engmon.monster` · `buddha.monster` 도 같은 방식입니다. Counter.dev 는 **사이트마다 ID가 다르므로**
 > 각 사이트에서 자기 사이트를 만들고 **자기 ID**를 넣습니다. (같은 ID를 붙이면 한 칸에 합쳐서 잡힙니다.)
 
 ### 다른 도구로 바꾸려면
@@ -125,7 +134,7 @@ CSS·JS를 참조할 때 `?v=5` 같은 버전을 붙여 둡니다.
 ## 배포
 
 정적 호스팅 아무 곳에나 HTML·CSS·JS 파일을 올리면 됩니다
-(`index.html`, `styles.css`, `script.js`, `analytics.js`, `CNAME`).
+(`index.html`, `styles.css`, `script.js`, `analytics.js`, `sitemap.xml`, `robots.txt`, `og-image.png`, `CNAME`).
 
 - **Vercel**: 프로젝트 루트를 그대로 배포 (프레임워크: Other / Static)
 - **Netlify**: 폴더를 드래그 앤 드롭

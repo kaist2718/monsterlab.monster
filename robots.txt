@@ -1,0 +1,11 @@
+# MonsterLab — monsterlab.monster
+# 모든 크롤러의 접근을 허용하고, 사이트맵 위치를 알려 줍니다.
+# 특정 봇을 막으려면 아래 블록을 복사해 경로를 적으세요.
+#
+# User-agent: SomeBot
+# Disallow: /
+
+User-agent: *
+Allow: /
+
+Sitemap: https://monsterlab.monster/sitemap.xml

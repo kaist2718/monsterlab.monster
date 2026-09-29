@@ -17,6 +17,11 @@
      4. 문의 폼 검증과 Formspree 전송(성공·실패·한도, UTF-8 본문, reCAPTCHA)이 동작하는가
      6. 한 기능이 실패해도 나머지(특히 언어 전환)는 살아남는가  ← 핵심 회귀 테스트
      7. HTML에 중복 id가 없고, 에셋 URL에 캐시 무효화 버전이 붙어 있는가
+     8. i18n 값에 HTML 태그가 있으면 data-i18n-html로만 바인딩되는가
+        (data-i18n(textContent)으로 붙으면 언어 전환 시 태그가 글자 그대로 보입니다)
+     9. HTML에 적힌 기본 문구(한국어)가 ko 사전과 같은가
+        (어긋나면 페이지를 열 때와 언어를 돌렸다 올 때 문구가 달라집니다)
+    10. 검색엔진 파일(sitemap.xml·robots.txt)과 공유 카드(og:image)가 제대로 연결되어 있는가
    ========================================================================== */
 'use strict';
 
@@ -182,6 +187,16 @@ function makeDom(html, options) {
 
   bySelector['meta[name="theme-color"]'] = [makeMeta('theme-color', '#0a0e13')];
   bySelector['meta[name="description"]'] = [makeMeta('description', '')];
+
+  /* 공유 미리보기(og:) 메타 — 언어 전환 시 같이 갱신되는지 봅니다 */
+  const ogDescEl = makeElement('meta');
+  ogDescEl.setAttribute('property', 'og:description');
+  ogDescEl.setAttribute('content', '');
+  const ogLocaleEl = makeElement('meta');
+  ogLocaleEl.setAttribute('property', 'og:locale');
+  ogLocaleEl.setAttribute('content', '');
+  bySelector['meta[property="og:description"]'] = [ogDescEl];
+  bySelector['meta[property="og:locale"]'] = [ogLocaleEl];
 
   /* id가 붙은 실제 태그의 속성을 그 요소로 옮깁니다 (action, data-i18n, placeholder ...).
      script.js는 이런 속성을 읽어 동작을 정하므로(예: <form action>으로 Formspree 연결 판단),
@@ -582,7 +597,14 @@ if (index) {
     const expected = sandbox.MonsterLab.t('page.title', 'en');
     assert(title === expected, 'title = "' + title + '" (기대: "' + expected + '")');
     assert(desc && desc.length > 10, 'description이 비어 있습니다');
-    return 'title = "' + title + '"';
+
+    /* 공유 미리보기(og:)도 같은 문구·언어를 따라야 합니다 */
+    const ogDesc = dom.bySelector['meta[property="og:description"]'][0].getAttribute('content');
+    const ogLocale = dom.bySelector['meta[property="og:locale"]'][0].getAttribute('content');
+    assert(ogDesc === sandbox.MonsterLab.t('page.desc', 'en'),
+      'og:description = "' + ogDesc + '" (기대: page.desc en)');
+    assert(ogLocale === 'en_US', 'og:locale = "' + ogLocale + '"');
+    return 'title = "' + title + '" + og:description·og:locale 동기화';
   });
 
   check('테마 버튼 설명도 새 언어로 갱신된다', () => {
@@ -873,6 +895,89 @@ if (index) {
     assert(onlyEn.length === 0, 'en에만 있음: ' + onlyEn.join(', '));
     return 'ko ' + dict.ko.length + '개 = en ' + dict.en.length + '개';
   });
+
+  /* 값에 HTML 태그(<br>, <strong> 등)가 있는데 data-i18n(textContent)으로 붙으면
+     언어 전환 시 태그가 글자 그대로 화면에 보입니다. (실제로 hero.subtitle에서
+     이 일이 있었습니다.) 태그가 든 값은 반드시 data-i18n-html로 붙여야 합니다. */
+  check('HTML 태그가 든 i18n 값은 data-i18n-html로만 바인딩된다', () => {
+    const src = fs.readFileSync(path.join(ROOT, 'script.js'), 'utf8');
+    const start = src.indexOf('var I18N');
+    const body = src.slice(start, src.indexOf('var STORAGE_KEY', start));
+    const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+
+    const problems = [];
+    const pairs = /'([A-Za-z][\w.-]*)':\s*'((?:[^'\\]|\\.)*)'/g;
+    [...body.matchAll(pairs)].forEach((m) => {
+      const key = m[1];
+      if (m[2].indexOf('<') === -1) return;
+      if (html.indexOf('data-i18n="' + key + '"') !== -1) problems.push(key + ' (data-i18n)');
+      if (html.indexOf('data-i18n-html="' + key + '"') === -1) problems.push(key + ' (data-i18n-html 없음)');
+    });
+
+    assert(problems.length === 0, '태그가 든 값이 textContent로 붙음: ' + problems.join(', '));
+    return '마크업 포함 값은 모두 data-i18n-html 사용';
+  });
+
+  /* 화면에 보이는 기본 문구(한국어)는 index.html에 적혀 있고, 언어를 전환하면
+     사전이 기준이 됩니다. 둘이 어긋나면 "페이지를 열 때"와 "언어를 돌렸다 올 때"
+     문구가 달라집니다. (실제로 service.mag.desc·faq.a2에서 이 일이 있었습니다.) */
+  check('HTML 기본 문구가 ko 사전과 일치한다', () => {
+    const norm = (s) => s.replace(/<br\s*\/?\s*>/gi, '<br>').replace(/\s+/g, ' ').trim();
+
+    const src = fs.readFileSync(path.join(ROOT, 'script.js'), 'utf8');
+    const start = src.indexOf('var I18N');
+    const body = src.slice(start, src.indexOf('var STORAGE_KEY', start));
+    const ko = {};
+    const pairs = /'([A-Za-z][\w.-]*)':\s*'((?:[^'\\]|\\.)*)'/g;
+    [...body.slice(0, body.indexOf('en: {')).matchAll(pairs)].forEach((m) => {
+      ko[m[1]] = m[2];
+    });
+
+    const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+    const lower = html.toLowerCase();
+    const problems = [];
+
+    /* data-i18n(-html)은 태그 안 기본 문구를, data-i18n-placeholder / -aria-label은
+       태그의 placeholder / aria-label 속성을 사전값과 비교합니다 (속성이 없으면 건너뜀) */
+    const attrRe = /data-i18n(-html|-placeholder|-aria-label)?="([^"]+)"/g;
+    let m;
+    while ((m = attrRe.exec(html))) {
+      const kind = m[1] || '';
+      const key = m[2];
+      const expected = ko[key];
+      if (expected == null) continue; // 사전 누락은 위 검사가 맡습니다
+
+      const tagStart = html.lastIndexOf('<', m.index);
+      const tagEnd = html.indexOf('>', m.index);
+      const tagHtml = html.slice(tagStart, tagEnd + 1);
+      const tag = /^<([a-z][\w-]*)/i.exec(tagHtml)[1].toLowerCase();
+
+      let actual;
+      /* (?:^|\s) 로 붙인 이유: data-i18n-placeholder / data-i18n-aria-label 속성 안에도
+         'placeholder=' / 'aria-label=' 글자가 들어 있어, 그대로면 자기 자신과 비교합니다 */
+      if (kind === '-placeholder') {
+        const pm = /(?:^|\s)placeholder="([^"]*)"/.exec(tagHtml);
+        if (!pm) continue;
+        actual = pm[1];
+      } else if (kind === '-aria-label') {
+        const am = /(?:^|\s)aria-label="([^"]*)"/.exec(tagHtml);
+        if (!am) continue;
+        actual = am[1];
+      } else {
+        const close = lower.indexOf('</' + tag, tagEnd);
+        if (close === -1) continue;
+        actual = html.slice(tagEnd + 1, close);
+      }
+
+      if (norm(actual) !== norm(expected)) {
+        problems.push(key + ' → HTML: "' + norm(actual).slice(0, 60) + '" / ko: "' +
+          norm(expected).slice(0, 60) + '"');
+      }
+    }
+
+    assert(problems.length === 0, 'HTML 기본 문구 ≠ ko 사전:\n      ' + problems.slice(0, 5).join('\n      '));
+    return 'HTML 기본 문구 = ko 사전 (' + Object.keys(ko).length + '키 대조)';
+  });
 }
 
 check('사용하지 않는 i18n 키가 없다', () => {
@@ -946,6 +1051,49 @@ check('문의 폼이 실제 Formspree 폼 ID로 연결되어 있다', () => {
     '폼 ID가 자리표시자(' + match[1] + ')라 문의가 메일 앱으로만 갑니다 — 대시보드 폼 ID로 바꾸세요');
   assert(match[1].length >= 6, '폼 ID가 너무 짧습니다: ' + match[1]);
   return 'formspree.io/f/' + match[1];
+});
+
+/* ── 6-2. 검색엔진 노출 (SEO) ──────────────────────────────────────────────── */
+check('sitemap.xml · robots.txt가 서로를 가리킨다', () => {
+  const sitemap = fs.readFileSync(path.join(ROOT, 'sitemap.xml'), 'utf8');
+  const robots = fs.readFileSync(path.join(ROOT, 'robots.txt'), 'utf8');
+
+  assert(/<loc>https:\/\/monsterlab\.monster\/<\/loc>/.test(sitemap),
+    'sitemap.xml에 사이트 주소(https://monsterlab.monster/)가 없습니다');
+  assert(/^\s*Sitemap:\s*https:\/\/monsterlab\.monster\/sitemap\.xml\s*$/m.test(robots),
+    'robots.txt가 sitemap.xml을 가리키지 않습니다');
+  assert(/User-agent:\s*\*/.test(robots) && /^\s*Allow:\s*\/\s*$/m.test(robots),
+    'robots.txt에 User-agent: * / Allow: / 이 없습니다');
+
+  const urls = [...sitemap.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1]);
+  return 'sitemap ' + urls.length + '개 URL · robots.txt ↔ sitemap.xml 연결 확인';
+});
+
+check('og:image가 실제 파일로 연결되어 있다', () => {
+  const html = fs.readFileSync(path.join(ROOT, 'index.html'), 'utf8');
+  const og = /property="og:image"\s+content="([^"]+)"/.exec(html);
+  assert(og, 'index.html에 og:image가 없습니다');
+
+  const name = og[1].split('/').pop();
+  const file = path.join(ROOT, name);
+  assert(fs.existsSync(file), name + ' 파일이 저장소에 없습니다');
+
+  const buf = fs.readFileSync(file);
+  assert(buf.length > 10 * 1024, name + ' 파일이 너무 작습니다 (' + buf.length + ' bytes)');
+  assert(buf[0] === 0x89 && buf.toString('ascii', 1, 4) === 'PNG', name + '이 PNG가 아닙니다');
+
+  const width = buf.readUInt32BE(16);
+  const height = buf.readUInt32BE(20);
+  assert(width === 1200 && height === 630,
+    '공유 카드는 1200×630이어야 합니다 (' + width + '×' + height + ')');
+
+  /* 크기가 메타에 적혀 있어야 크롤러가 비율을 맞춰 카드를 그립니다 */
+  assert(/property="og:image:width"\s+content="1200"/.test(html), 'og:image:width가 없습니다');
+  assert(/property="og:image:height"\s+content="630"/.test(html), 'og:image:height가 없습니다');
+  assert(/name="twitter:card"\s+content="summary_large_image"/.test(html),
+    'twitter:card가 summary_large_image가 아닙니다 (큰 카드 이미지를 쓰려면 필요)');
+
+  return name + ' 1200×630 PNG · width/height·twitter 카드 확인';
 });
 
 /* ── 7. 데이터 구조 ───────────────────────────────────────────────────── */

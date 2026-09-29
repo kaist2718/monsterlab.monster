@@ -4,14 +4,20 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>MonsterLab — 작은 아이디어를 괴물 같은 서비스로</title>
-<meta name="description" content="MonsterLab는 학습부터 도구까지, 사람들이 매일 쓰는 서비스를 만듭니다. 지금 toeic.monster를 운영 중입니다." />
+<meta name="description" content="MonsterLab는 학습부터 도구까지, 사람들이 매일 쓰는 서비스를 만듭니다. 지금 toeic.monster · engmon.monster · buddha.monster를 운영 중입니다." />
 <meta property="og:title" content="MonsterLab" />
-<meta property="og:description" content="작은 아이디어를 괴물 같은 서비스로." />
+<meta property="og:description" content="MonsterLab는 학습부터 도구까지, 사람들이 매일 쓰는 서비스를 만듭니다. 지금 toeic.monster · engmon.monster · buddha.monster를 운영 중입니다." />
 <meta property="og:type" content="website" />
 <meta property="og:url" content="https://monsterlab.monster/" />
 <meta property="og:site_name" content="MonsterLab" />
 <meta property="og:locale" content="ko_KR" />
-<meta name="twitter:card" content="summary" />
+<!-- 공유 카드 이미지 — og-card.html 소스를 headless Chrome로 렌더링해 만든 og-image.png (1200×630) -->
+<meta property="og:image" content="https://monsterlab.monster/og-image.png" />
+<meta property="og:image:width" content="1200" />
+<meta property="og:image:height" content="630" />
+<meta property="og:image:alt" content="MonsterLab — 작은 아이디어를 괴물 같은 서비스로" />
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:image" content="https://monsterlab.monster/og-image.png" />
 <meta name="theme-color" content="#0a0e13" />
 <!-- 테마/강조색을 첫 페인트 전에 적용해 깜박임을 막습니다.
      모드: dark | light | system · 강조색: mint | violet | ocean | amber -->
@@ -44,10 +50,11 @@
   "name": "MonsterLab",
   "url": "https://monsterlab.monster/",
   "email": "kaist2718@gmail.com",
-  "description": "작은 아이디어를 괴물 같은 서비스로. toeic.monster와 engmon.monster를 운영하는 실험실.",
+  "description": "작은 아이디어를 괴물 같은 서비스로. toeic.monster · engmon.monster · buddha.monster를 운영하는 실험실.",
   "owns": [
-    { "@type": "WebSite", "name": "toeic.monster", "url": "https://toeic.monster" },
-    { "@type": "WebSite", "name": "engmon.monster", "url": "https://engmon.monster" }
+    { "@type": "WebSite", "name": "toeic.monster", "url": "https://toeic.monster", "description": "토익 학습 서비스 — 문제 풀이와 오답 관리로 점수를 끌어올리는 영어 시험 학습" },
+    { "@type": "WebSite", "name": "engmon.monster", "url": "https://engmon.monster", "description": "월간 영어 매거진 EngMon — 어휘·문법·이디엄·대화·확인 문제를 오디오와 함께" },
+    { "@type": "WebSite", "name": "buddha.monster", "url": "https://buddha.monster", "description": "법구경 26품 423게송 영·한 대역 판본 — 품별 해설, 오늘의 법구, 게송 검색" }
   ]
 }
 </script>
@@ -115,9 +122,10 @@
       <h1 data-i18n-html="hero.title">
         작은 아이디어를<br /><span class="accent">괴물 같은 서비스</span>로.
       </h1>
-      <p class="lead" data-i18n="hero.subtitle">
+      <p class="lead" data-i18n-html="hero.subtitle">
         MonsterLab는 학습부터 도구까지, 사람들이 매일 쓰는 서비스를 만듭니다.
-        지금 <strong>toeic.monster</strong>를 운영하고 있고, 더 많은 실험을 준비 중입니다.
+        지금 <strong>toeic.monster</strong>·<strong>engmon.monster</strong>·<strong>buddha.monster</strong>를 운영하고 있고,
+        더 많은 실험을 준비 중입니다.
       </p>
       <div class="hero-actions">
         <a class="btn btn-primary" href="#services" data-i18n="hero.ctaPrimary">서비스 둘러보기</a>
@@ -155,11 +163,11 @@
 
       <ul class="stats">
         <li>
-          <span class="stat-num">2</span>
+          <span class="stat-num">3</span>
           <span class="stat-label" data-i18n="stats.live">운영 중인 서비스</span>
         </li>
         <li>
-          <span class="stat-num">4+</span>
+          <span class="stat-num">3+</span>
           <span class="stat-label" data-i18n="stats.lab">실험 중인 서비스</span>
         </li>
         <li>
@@ -241,6 +249,21 @@
           </a>
         </article>
 
+        <!-- ✅ 운영 중 -->
+        <article class="service service-live">
+          <div class="service-head">
+            <span class="service-dot" aria-hidden="true"></span>
+            <span class="status status-live" data-i18n="status.live">운영 중</span>
+          </div>
+          <h3 class="service-name">buddha<span class="accent">.monster</span></h3>
+          <p class="service-desc" data-i18n="service.buddha.desc">
+            법구경 26품 423게송을 영어 원문과 우리말 번역으로 함께 읽는 무료 대역 판본. 품별 해설과 오늘의 법구, 게송 검색까지 가입 없이 이용할 수 있습니다.
+          </p>
+          <a class="service-link" href="https://buddha.monster" target="_blank" rel="noopener">
+            <span data-i18n="service.visit">사이트 방문</span> <span aria-hidden="true">↗</span>
+          </a>
+        </article>
+
         <!-- 🚧 준비 중 (서비스가 늘어나면 이 블록을 복사해서 추가하세요) -->
         <article class="service service-soon">
           <div class="service-head">
@@ -297,17 +320,25 @@
         <li>
           <span class="tl-dot" aria-hidden="true"></span>
           <div>
-            <p class="tl-date" data-i18n="roadmap.i2.date">Next</p>
-            <h3 data-i18n="roadmap.i2.title">두 번째 서비스 출시</h3>
-            <p data-i18n="roadmap.i2.body">학습과 도구 영역으로 실험을 넓힙니다.</p>
+            <p class="tl-date" data-i18n="roadmap.i2.date">Launched</p>
+            <h3 data-i18n="roadmap.i2.title">engmon.monster 출시</h3>
+            <p data-i18n="roadmap.i2.body">월간 영어 매거진 EngMon을 공개했습니다.</p>
           </div>
         </li>
         <li>
           <span class="tl-dot" aria-hidden="true"></span>
           <div>
-            <p class="tl-date" data-i18n="roadmap.i3.date">Later</p>
-            <h3 data-i18n="roadmap.i3.title">.monster 패밀리 확장</h3>
-            <p data-i18n="roadmap.i3.body">서로 연결되는 여러 서비스를 하나의 생태계로 묶습니다.</p>
+            <p class="tl-date" data-i18n="roadmap.i3.date">Launched</p>
+            <h3 data-i18n="roadmap.i3.title">buddha.monster 출시</h3>
+            <p data-i18n="roadmap.i3.body">법구경 26품 423게송을 영어 원문과 우리말 번역으로 담은 판본을 공개했습니다.</p>
+          </div>
+        </li>
+        <li>
+          <span class="tl-dot" aria-hidden="true"></span>
+          <div>
+            <p class="tl-date" data-i18n="roadmap.i4.date">Later</p>
+            <h3 data-i18n="roadmap.i4.title">.monster 패밀리 확장</h3>
+            <p data-i18n="roadmap.i4.body">서로 연결되는 여러 서비스를 하나의 생태계로 묶습니다.</p>
           </div>
         </li>
       </ol>
@@ -324,7 +355,7 @@
       <div class="faq-list">
         <details class="faq" open>
           <summary data-i18n="faq.q1">서비스는 무료인가요?</summary>
-          <p data-i18n="faq.a1">toeic.monster의 핵심 학습 기능은 무료로 사용할 수 있습니다. 꼭 필요한 추가 기능만 합리적인 가격의 유료 옵션으로 검토합니다.</p>
+          <p data-i18n="faq.a1">toeic.monster의 핵심 학습 기능은 무료로 사용할 수 있고, engmon.monster와 buddha.monster의 모든 콘텐츠도 무료로 열 수 있습니다. 꼭 필요한 추가 기능만 합리적인 가격의 유료 옵션으로 검토합니다.</p>
         </details>
         <details class="faq">
           <summary data-i18n="faq.q2">어떤 기술로 만드나요?</summary>
@@ -458,6 +489,7 @@
       <a href="#faq" data-i18n="nav.faq">FAQ</a>
       <a href="https://toeic.monster" target="_blank" rel="noopener">toeic.monster</a>
       <a href="https://engmon.monster" target="_blank" rel="noopener">engmon.monster</a>
+      <a href="https://buddha.monster" target="_blank" rel="noopener">buddha.monster</a>
       <a href="mailto:kaist2718@gmail.com">kaist2718@gmail.com</a>
     </nav>
     <div class="footer-settings">
@@ -486,6 +518,6 @@
 
 <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
 
-<script src="script.js?v=7"></script>
+<script src="script.js?v=8"></script>
 </body>
 </html>

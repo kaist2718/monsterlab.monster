@@ -27,7 +27,7 @@
 
       'hero.badge': '실험실에서 막 나온 서비스들',
       'hero.title': '작은 아이디어를<br /><span class="accent">괴물 같은 서비스</span>로.',
-      'hero.subtitle': 'MonsterLab는 학습부터 도구까지, 사람들이 매일 쓰는 서비스를 만듭니다. 지금 <strong>toeic.monster</strong>와 <strong>engmon.monster</strong>를 운영하고 있고, 더 많은 실험을 준비 중입니다.',
+      'hero.subtitle': 'MonsterLab는 학습부터 도구까지, 사람들이 매일 쓰는 서비스를 만듭니다. 지금 <strong>toeic.monster</strong>·<strong>engmon.monster</strong>·<strong>buddha.monster</strong>를 운영하고 있고, 더 많은 실험을 준비 중입니다.',
       'hero.ctaPrimary': '서비스 둘러보기',
       'hero.ctaSecondary': 'toeic.monster 바로가기',
       'preview.caption': 'toeic.monster 학습 화면 미리보기',
@@ -55,7 +55,8 @@
       'service.toeic.desc': '토익 학습을 더 가볍게. 문제 풀이와 오답 관리로 점수를 끌어올리는 영어 시험 학습 서비스.',
       'service.visit': '사이트 방문',
       'service.soonCta': '곧 공개됩니다',
-      'service.mag.desc': '호(issue) 단위로 읽는 영어 매거진. 테마 어휘·문법·이디엄·대화·확인 문제를 오디오와 함께 한 호에 담습니다.',
+      'service.mag.desc': '호(issue) 단위로 읽는 월간 영어 매거진. 테마 어휘·문법·이디엄·대화·확인 문제를 오디오와 함께 한 호에 담습니다.',
+      'service.buddha.desc': '법구경 26품 423게송을 영어 원문과 우리말 번역으로 함께 읽는 무료 대역 판본. 품별 해설과 오늘의 법구, 게송 검색까지 가입 없이 이용할 수 있습니다.',
       'service.s1.name': '새로운 학습 서비스',
       'service.s1.desc': '시험 대비를 넘어 매일 짧게 이어가는 학습 루틴을 만들고 있습니다.',
       'service.s2.name': '생산성 도구',
@@ -68,20 +69,23 @@
       'roadmap.i1.date': 'Now',
       'roadmap.i1.title': 'toeic.monster 운영',
       'roadmap.i1.body': '토익 학습 서비스를 운영하며 사용자 피드백을 쌓고 있습니다.',
-      'roadmap.i2.date': 'Next',
+      'roadmap.i2.date': 'Launched',
       'roadmap.i2.title': 'engmon.monster 출시',
       'roadmap.i2.body': '월간 영어 매거진 EngMon을 공개했습니다.',
-      'roadmap.i3.date': 'Later',
-      'roadmap.i3.title': '.monster 패밀리 확장',
-      'roadmap.i3.body': '서로 연결되는 여러 서비스를 하나의 생태계로 묶습니다.',
+      'roadmap.i3.date': 'Launched',
+      'roadmap.i3.title': 'buddha.monster 출시',
+      'roadmap.i3.body': '법구경 26품 423게송을 영어 원문과 우리말 번역으로 담은 판본을 공개했습니다.',
+      'roadmap.i4.date': 'Later',
+      'roadmap.i4.title': '.monster 패밀리 확장',
+      'roadmap.i4.body': '서로 연결되는 여러 서비스를 하나의 생태계로 묶습니다.',
 
       'faq.kicker': 'FAQ',
       'faq.title': '자주 받는 질문',
       'faq.lead': '찾는 답이 없으면 아래 주소로 편하게 물어보세요.',
       'faq.q1': '서비스는 무료인가요?',
-      'faq.a1': 'toeic.monster의 핵심 학습 기능은 무료로 사용할 수 있습니다. 꼭 필요한 추가 기능만 합리적인 가격의 유료 옵션으로 검토합니다.',
+      'faq.a1': 'toeic.monster의 핵심 학습 기능은 무료로 사용할 수 있고, engmon.monster와 buddha.monster의 모든 콘텐츠도 무료로 열 수 있습니다. 꼭 필요한 추가 기능만 합리적인 가격의 유료 옵션으로 검토합니다.',
       'faq.q2': '어떤 기술로 만드나요?',
-      'faq.a2': '웹 표준 기술(HTML·CSS·JavaScript)을 기본으로 하고, 서버가 필요한 곳에만 가벼운 백엔드를 붙입니다. 페이지가 빠르게 뜨도록 항상 가볍게 유지합니다.',
+      'faq.a2': '웹 표준 기술(HTML·CSS·JavaScript)을 기본으로 하고, 서버가 필요한 곳에만 가벼운 백엔드를 붙입니다. 페이지가 빠르게 뜨도록 가볍게 유지합니다.',
       'faq.q3': '제휴나 협업을 제안하고 싶어요.',
       'faq.a3': '언제든 환영합니다. 간단한 소개와 함께 메일을 보내주시면 영업일 기준 2~3일 안에 답장드립니다.',
       'faq.q4': '버그 신고나 기능 제안은 어디로 보내나요?',
@@ -145,7 +149,7 @@
       'accent.amber': '앰버',
 
       'page.title': 'MonsterLab — 작은 아이디어를 괴물 같은 서비스로',
-      'page.desc': 'MonsterLab는 학습부터 도구까지, 사람들이 매일 쓰는 서비스를 만듭니다. 지금 toeic.monster를 운영 중입니다.',
+      'page.desc': 'MonsterLab는 학습부터 도구까지, 사람들이 매일 쓰는 서비스를 만듭니다. 지금 toeic.monster · engmon.monster · buddha.monster를 운영 중입니다.',
 
       'footer.rights': '모든 권리 보유.'
     },
@@ -159,12 +163,12 @@
 
       'hero.badge': 'Fresh out of the lab',
       'hero.title': 'Small ideas into<br /><span class="accent">monster services</span>.',
-      'hero.subtitle': 'MonsterLab builds services people open every day — from studying to everyday tools. We run <strong>toeic.monster</strong> and <strong>engmon.monster</strong>, with more experiments on the way.',
+      'hero.subtitle': 'MonsterLab builds services people open every day — from studying to everyday tools. We run <strong>toeic.monster</strong>, <strong>engmon.monster</strong> and <strong>buddha.monster</strong>, with more experiments on the way.',
       'hero.ctaPrimary': 'Explore services',
       'hero.ctaSecondary': 'Visit toeic.monster',
       'preview.caption': 'A look at the toeic.monster study screen',
 
-      'stats.live': 'Live service',
+      'stats.live': 'Live services',
       'stats.lab': 'In the lab',
       'stats.ideas': 'Next ideas',
 
@@ -187,7 +191,8 @@
       'service.toeic.desc': 'TOEIC prep made lighter. Practice questions and mistake tracking that push your score up.',
       'service.visit': 'Visit site',
       'service.soonCta': 'Coming soon',
-      'service.mag.desc': 'An English magazine read one issue at a time — theme vocabulary, grammar, idioms, dialogues and a quiz, with audio in every issue.',
+      'service.mag.desc': 'A monthly English magazine read one issue at a time — theme vocabulary, grammar, idioms, dialogues and a quiz, with audio in every issue.',
+      'service.buddha.desc': 'The Dhammapada in full — 26 chapters, 423 verses, English original beside a Korean translation. Chapter notes, a verse of the day and verse search, all free with no sign-up.',
       'service.s1.name': 'A new learning service',
       'service.s1.desc': 'Beyond test prep — we are building a short, daily learning routine.',
       'service.s2.name': 'Productivity tools',
@@ -200,18 +205,21 @@
       'roadmap.i1.date': 'Now',
       'roadmap.i1.title': 'Running toeic.monster',
       'roadmap.i1.body': 'Operating a TOEIC learning service and collecting real user feedback.',
-      'roadmap.i2.date': 'Next',
+      'roadmap.i2.date': 'Launched',
       'roadmap.i2.title': 'engmon.monster launch',
       'roadmap.i2.body': 'We shipped EngMon, a monthly English magazine.',
-      'roadmap.i3.date': 'Later',
-      'roadmap.i3.title': 'Growing the .monster family',
-      'roadmap.i3.body': 'Bringing connected services together into one ecosystem.',
+      'roadmap.i3.date': 'Launched',
+      'roadmap.i3.title': 'buddha.monster launch',
+      'roadmap.i3.body': 'We shipped the Dhammapada in full — 423 verses, English original beside a Korean translation.',
+      'roadmap.i4.date': 'Later',
+      'roadmap.i4.title': 'Growing the .monster family',
+      'roadmap.i4.body': 'Bringing connected services together into one ecosystem.',
 
       'faq.kicker': 'FAQ',
       'faq.title': 'Questions we get a lot',
       'faq.lead': 'Nothing here? Just write to the address below.',
       'faq.q1': 'Is the service free?',
-      'faq.a1': 'The core study features of toeic.monster are free to use. Only genuinely optional extras would ever be considered as fairly priced paid options.',
+      'faq.a1': 'The core study features of toeic.monster are free to use, and everything on engmon.monster and buddha.monster is free to read as well. Only genuinely optional extras would ever be considered as fairly priced paid options.',
       'faq.q2': 'What is it built with?',
       'faq.a2': 'Plain web standards — HTML, CSS, and JavaScript — with a light backend only where a server is actually needed. We keep pages fast and lean on purpose.',
       'faq.q3': 'I would like to propose a partnership.',
@@ -277,7 +285,7 @@
       'accent.amber': 'Amber',
 
       'page.title': 'MonsterLab — Small ideas into monster services',
-      'page.desc': 'MonsterLab builds services people open every day. We run toeic.monster today, with more experiments on the way.',
+      'page.desc': 'MonsterLab builds services people open every day. We run toeic.monster, engmon.monster and buddha.monster today, with more experiments on the way.',
 
       'footer.rights': 'All rights reserved.'
     }
@@ -394,7 +402,15 @@
     if (descKey && dict[descKey]) {
       var descEl = document.querySelector('meta[name="description"]');
       if (descEl) descEl.setAttribute('content', dict[descKey]);
+
+      /* 공유 미리보기(og:description)도 같은 문구를 따라갑니다 */
+      var ogDescEl = document.querySelector('meta[property="og:description"]');
+      if (ogDescEl) ogDescEl.setAttribute('content', dict[descKey]);
     }
+
+    /* 공유 미리보기의 언어 표시도 함께 바뀝니다 (ko_KR ↔ en_US) */
+    var ogLocaleEl = document.querySelector('meta[property="og:locale"]');
+    if (ogLocaleEl) ogLocaleEl.setAttribute('content', lang === 'ko' ? 'ko_KR' : 'en_US');
 
     var hintEl = $('formHint');
     if (hintEl) hintEl.classList.remove('is-error');
